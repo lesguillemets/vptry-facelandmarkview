@@ -32,8 +32,10 @@ env/
 *.swo
 *~
 
-# Sample data
+# Sample data and visualizations
 *.npy
+*.png
+*.jpg
 
 # OS
 .DS_Store
