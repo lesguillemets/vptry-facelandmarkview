@@ -25,8 +25,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtGui import QSurfaceFormat
-from OpenGL.GL import *
-from OpenGL.GLU import *
+import OpenGL.GL as gl
+import OpenGL.GLU as glu
 
 
 class LandmarkGLWidget(QOpenGLWidget):
@@ -67,33 +67,33 @@ class LandmarkGLWidget(QOpenGLWidget):
 
     def initializeGL(self) -> None:
         """Initialize OpenGL"""
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glEnable(GL_POINT_SMOOTH)
-        glEnable(GL_LINE_SMOOTH)
-        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST)
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
-        glClearColor(1.0, 1.0, 1.0, 1.0)
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        gl.glEnable(gl.GL_POINT_SMOOTH)
+        gl.glEnable(gl.GL_LINE_SMOOTH)
+        gl.glHint(gl.GL_POINT_SMOOTH_HINT, gl.GL_NICEST)
+        gl.glHint(gl.GL_LINE_SMOOTH_HINT, gl.GL_NICEST)
+        gl.glClearColor(1.0, 1.0, 1.0, 1.0)
 
     def resizeGL(self, w: int, h: int) -> None:
         """Handle window resize"""
-        glViewport(0, 0, w, h)
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
+        gl.glViewport(0, 0, w, h)
+        gl.glMatrixMode(gl.GL_PROJECTION)
+        gl.glLoadIdentity()
         aspect = w / h if h > 0 else 1.0
-        gluPerspective(45.0, aspect, 0.1, 100.0)
-        glMatrixMode(GL_MODELVIEW)
+        glu.gluPerspective(45.0, aspect, 0.1, 100.0)
+        gl.glMatrixMode(gl.GL_MODELVIEW)
 
     def paintGL(self) -> None:
         """Render the scene"""
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glLoadIdentity()
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        gl.glLoadIdentity()
 
         # Set camera position
-        glTranslatef(0.0, 0.0, -self.zoom)
-        glRotatef(self.rotation_x, 1.0, 0.0, 0.0)
-        glRotatef(self.rotation_y, 0.0, 1.0, 0.0)
+        gl.glTranslatef(0.0, 0.0, -self.zoom)
+        gl.glRotatef(self.rotation_x, 1.0, 0.0, 0.0)
+        gl.glRotatef(self.rotation_y, 0.0, 1.0, 0.0)
 
         if self.data is None:
             return
@@ -112,59 +112,59 @@ class LandmarkGLWidget(QOpenGLWidget):
         scale = 2.0 / max_extent if max_extent > 0 else 1.0
 
         # Draw base frame landmarks (blue circles)
-        glPointSize(8.0)
-        glColor4f(0.0, 0.0, 1.0, 0.6)
-        glBegin(GL_POINTS)
+        gl.glPointSize(8.0)
+        gl.glColor4f(0.0, 0.0, 1.0, 0.6)
+        gl.glBegin(gl.GL_POINTS)
         for point in base_landmarks:
             scaled_point = (point - center) * scale
-            glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
-        glEnd()
+            gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
+        gl.glEnd()
 
         # Draw current frame landmarks (red triangles - simulated with larger points)
-        glPointSize(12.0)
-        glColor4f(1.0, 0.0, 0.0, 0.8)
-        glBegin(GL_POINTS)
+        gl.glPointSize(12.0)
+        gl.glColor4f(1.0, 0.0, 0.0, 0.8)
+        gl.glBegin(gl.GL_POINTS)
         for point in current_landmarks:
             scaled_point = (point - center) * scale
-            glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
-        glEnd()
+            gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
+        gl.glEnd()
 
         # Draw vectors if enabled
         if self.show_vectors:
-            glLineWidth(1.0)
-            glColor4f(0.0, 0.8, 0.0, 0.3)
-            glBegin(GL_LINES)
+            gl.glLineWidth(1.0)
+            gl.glColor4f(0.0, 0.8, 0.0, 0.3)
+            gl.glBegin(gl.GL_LINES)
             for base_pt, curr_pt in zip(base_landmarks, current_landmarks):
                 scaled_base = (base_pt - center) * scale
                 scaled_curr = (curr_pt - center) * scale
-                glVertex3f(scaled_base[0], scaled_base[1], scaled_base[2])
-                glVertex3f(scaled_curr[0], scaled_curr[1], scaled_curr[2])
-            glEnd()
+                gl.glVertex3f(scaled_base[0], scaled_base[1], scaled_base[2])
+                gl.glVertex3f(scaled_curr[0], scaled_curr[1], scaled_curr[2])
+            gl.glEnd()
 
         # Draw coordinate axes
         self._draw_axes()
 
     def _draw_axes(self) -> None:
         """Draw coordinate axes"""
-        glLineWidth(2.0)
+        gl.glLineWidth(2.0)
         axis_length = 1.5
 
-        glBegin(GL_LINES)
+        gl.glBegin(gl.GL_LINES)
         # X axis (red)
-        glColor3f(1.0, 0.0, 0.0)
-        glVertex3f(0.0, 0.0, 0.0)
-        glVertex3f(axis_length, 0.0, 0.0)
+        gl.glColor3f(1.0, 0.0, 0.0)
+        gl.glVertex3f(0.0, 0.0, 0.0)
+        gl.glVertex3f(axis_length, 0.0, 0.0)
 
         # Y axis (green)
-        glColor3f(0.0, 1.0, 0.0)
-        glVertex3f(0.0, 0.0, 0.0)
-        glVertex3f(0.0, axis_length, 0.0)
+        gl.glColor3f(0.0, 1.0, 0.0)
+        gl.glVertex3f(0.0, 0.0, 0.0)
+        gl.glVertex3f(0.0, axis_length, 0.0)
 
         # Z axis (blue)
-        glColor3f(0.0, 0.0, 1.0)
-        glVertex3f(0.0, 0.0, 0.0)
-        glVertex3f(0.0, 0.0, axis_length)
-        glEnd()
+        gl.glColor3f(0.0, 0.0, 1.0)
+        gl.glVertex3f(0.0, 0.0, 0.0)
+        gl.glVertex3f(0.0, 0.0, axis_length)
+        gl.glEnd()
 
     def mousePressEvent(self, event) -> None:
         """Handle mouse press"""
