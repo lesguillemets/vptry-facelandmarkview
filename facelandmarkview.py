@@ -11,12 +11,6 @@ import numpy as np
 import numpy.typing as npt
 from pathlib import Path
 
-# Set up logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -35,6 +29,12 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtGui import QSurfaceFormat
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 
 class LandmarkGLWidget(QOpenGLWidget):
@@ -110,7 +110,9 @@ class LandmarkGLWidget(QOpenGLWidget):
         gl.glTranslatef(0.0, 0.0, -self.zoom)
         gl.glRotatef(self.rotation_x, 1.0, 0.0, 0.0)
         gl.glRotatef(self.rotation_y, 0.0, 1.0, 0.0)
-        logger.debug(f"Camera: zoom={self.zoom}, rotation_x={self.rotation_x}, rotation_y={self.rotation_y}")
+        logger.debug(
+            f"Camera: zoom={self.zoom}, rotation_x={self.rotation_x}, rotation_y={self.rotation_y}"
+        )
 
         if self.data is None:
             logger.warning("paintGL: No data to render")
@@ -120,21 +122,25 @@ class LandmarkGLWidget(QOpenGLWidget):
         base_landmarks = self.data[self.base_frame]
         current_landmarks = self.data[self.current_frame]
         logger.info(f"Rendering frame {self.current_frame} (base: {self.base_frame})")
-        logger.debug(f"Base landmarks shape: {base_landmarks.shape}, Current landmarks shape: {current_landmarks.shape}")
+        logger.debug(
+            f"Base landmarks shape: {base_landmarks.shape}, Current landmarks shape: {current_landmarks.shape}"
+        )
 
         # Filter out NaN values
         base_valid_mask = ~np.isnan(base_landmarks).any(axis=1)
         current_valid_mask = ~np.isnan(current_landmarks).any(axis=1)
-        
+
         base_landmarks_valid = base_landmarks[base_valid_mask]
         current_landmarks_valid = current_landmarks[current_valid_mask]
-        
+
         nan_count_base = (~base_valid_mask).sum()
         nan_count_current = (~current_valid_mask).sum()
-        
+
         if nan_count_base > 0 or nan_count_current > 0:
-            logger.warning(f"Filtered out NaN landmarks: base={nan_count_base}, current={nan_count_current}")
-        
+            logger.warning(
+                f"Filtered out NaN landmarks: base={nan_count_base}, current={nan_count_current}"
+            )
+
         if len(base_landmarks_valid) == 0 and len(current_landmarks_valid) == 0:
             logger.error("No valid landmarks to render (all contain NaN)")
             return
@@ -145,11 +151,11 @@ class LandmarkGLWidget(QOpenGLWidget):
             valid_points.append(base_landmarks_valid)
         if len(current_landmarks_valid) > 0:
             valid_points.append(current_landmarks_valid)
-        
+
         if len(valid_points) == 0:
             logger.error("No valid points to calculate center")
             return
-            
+
         all_points = np.vstack(valid_points)
         center = all_points.mean(axis=0)
 
@@ -157,48 +163,66 @@ class LandmarkGLWidget(QOpenGLWidget):
         extent = all_points.max(axis=0) - all_points.min(axis=0)
         max_extent = extent.max()
         scale = 2.0 / max_extent if max_extent > 0 else 1.0
-        logger.info(f"Data center: {center}, extent: {extent}, max_extent: {max_extent}, scale: {scale}")
-        logger.debug(f"Valid landmarks: base={len(base_landmarks_valid)}, current={len(current_landmarks_valid)}")
+        logger.info(
+            f"Data center: {center}, extent: {extent}, max_extent: {max_extent}, scale: {scale}"
+        )
+        logger.debug(
+            f"Valid landmarks: base={len(base_landmarks_valid)}, current={len(current_landmarks_valid)}"
+        )
 
         # Draw base frame landmarks (blue circles)
         if len(base_landmarks_valid) > 0:
-            logger.debug(f"Drawing {len(base_landmarks_valid)} base frame landmarks (blue)")
+            logger.debug(
+                f"Drawing {len(base_landmarks_valid)} base frame landmarks (blue)"
+            )
             gl.glPointSize(8.0)
             gl.glColor4f(0.0, 0.0, 1.0, 0.6)
             gl.glBegin(gl.GL_POINTS)
             for i, point in enumerate(base_landmarks_valid):
                 scaled_point = (point - center) * scale
                 if i == 0:  # Log first point as example
-                    logger.debug(f"First base landmark: original={point}, scaled={scaled_point}")
+                    logger.debug(
+                        f"First base landmark: original={point}, scaled={scaled_point}"
+                    )
                 gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
             gl.glEnd()
 
         # Draw current frame landmarks (red triangles - simulated with larger points)
         if len(current_landmarks_valid) > 0:
-            logger.debug(f"Drawing {len(current_landmarks_valid)} current frame landmarks (red)")
+            logger.debug(
+                f"Drawing {len(current_landmarks_valid)} current frame landmarks (red)"
+            )
             gl.glPointSize(12.0)
             gl.glColor4f(1.0, 0.0, 0.0, 0.8)
             gl.glBegin(gl.GL_POINTS)
             for i, point in enumerate(current_landmarks_valid):
                 scaled_point = (point - center) * scale
                 if i == 0:  # Log first point as example
-                    logger.debug(f"First current landmark: original={point}, scaled={scaled_point}")
+                    logger.debug(
+                        f"First current landmark: original={point}, scaled={scaled_point}"
+                    )
                 gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
             gl.glEnd()
 
         # Draw vectors if enabled (only for landmarks that are valid in both frames)
-        if self.show_vectors and len(base_landmarks_valid) > 0 and len(current_landmarks_valid) > 0:
+        if (
+            self.show_vectors
+            and len(base_landmarks_valid) > 0
+            and len(current_landmarks_valid) > 0
+        ):
             # Match valid landmarks from both frames
             both_valid_mask = base_valid_mask & current_valid_mask
             base_landmarks_both = base_landmarks[both_valid_mask]
             current_landmarks_both = current_landmarks[both_valid_mask]
-            
+
             if len(base_landmarks_both) > 0:
                 logger.debug(f"Drawing {len(base_landmarks_both)} vectors (green)")
                 gl.glLineWidth(1.0)
                 gl.glColor4f(0.0, 0.8, 0.0, 0.3)
                 gl.glBegin(gl.GL_LINES)
-                for base_pt, curr_pt in zip(base_landmarks_both, current_landmarks_both):
+                for base_pt, curr_pt in zip(
+                    base_landmarks_both, current_landmarks_both
+                ):
                     scaled_base = (base_pt - center) * scale
                     scaled_curr = (curr_pt - center) * scale
                     gl.glVertex3f(scaled_base[0], scaled_base[1], scaled_base[2])
@@ -375,12 +399,16 @@ class FaceLandmarkViewer(QMainWindow):
             nan_count = np.isnan(self.data).sum()
             if nan_count > 0:
                 nan_landmarks = np.isnan(self.data).any(axis=2).sum()
-                logger.warning(f"Data contains {nan_count} NaN values across {nan_landmarks} landmark positions")
+                logger.warning(
+                    f"Data contains {nan_count} NaN values across {nan_landmarks} landmark positions"
+                )
                 logger.warning("NaN landmarks will be filtered out during rendering")
 
             # Log data range for debugging
-            logger.debug(f"Data min: {np.nanmin(self.data)}, max: {np.nanmax(self.data)}")
-            logger.debug(f"Data mean: {np.nanmean(self.data, axis=(0,1))}")
+            logger.debug(
+                f"Data min: {np.nanmin(self.data)}, max: {np.nanmax(self.data)}"
+            )
+            logger.debug(f"Data mean: {np.nanmean(self.data, axis=(0, 1))}")
 
             # Update UI
             self.frame_slider.setMaximum(n_frames - 1)
