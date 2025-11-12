@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
-from facelandmarkview import FaceLandmarkViewer
+from vptry_facelandmarkview import FaceLandmarkViewer
 
 
 def test_load_data_programmatically():

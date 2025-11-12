@@ -3,13 +3,23 @@ name = "vptry-facelandmarkview"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8"
 dependencies = [
     "numpy>=2.3.4",
     "pyopengl>=3.1.10",
     "pyopengl-accelerate>=3.1.10",
     "pyside6>=6.10.0",
 ]
+
+[project.scripts]
+facelandmarkview = "vptry_facelandmarkview.main:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [dependency-groups]
 dev = [

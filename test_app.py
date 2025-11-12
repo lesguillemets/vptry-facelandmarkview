@@ -29,17 +29,9 @@ def test_imports():
 
         print(f"✓ PySide6.QtWidgets imported")
 
-        import matplotlib
+        import vptry_facelandmarkview
 
-        print(f"✓ matplotlib imported")
-
-        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-
-        print(f"✓ matplotlib Qt backend imported")
-
-        import facelandmarkview
-
-        print(f"✓ facelandmarkview module imported")
+        print(f"✓ vptry_facelandmarkview module imported")
 
         return True
     except ImportError as e:
@@ -51,7 +43,7 @@ def test_app_instantiation():
     """Test that the application can be instantiated"""
     try:
         from PySide6.QtWidgets import QApplication
-        from facelandmarkview import FaceLandmarkViewer
+        from vptry_facelandmarkview import FaceLandmarkViewer
 
         app = QApplication.instance()
         if app is None:

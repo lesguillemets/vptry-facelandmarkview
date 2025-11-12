@@ -5,7 +5,7 @@ Test script to validate the GUI layout improvements
 
 import sys
 from PySide6.QtWidgets import QApplication, QVBoxLayout
-from facelandmarkview import FaceLandmarkViewer
+from vptry_facelandmarkview import FaceLandmarkViewer
 
 
 def test_layout_stretch_factors():
