@@ -29,8 +29,24 @@ pip install -r requirements.txt
 
 ### Running the Application
 
+**Basic usage (with GUI file picker):**
 ```bash
 python facelandmarkview.py
+```
+
+**Load a file directly from command line:**
+```bash
+python facelandmarkview.py sample_landmarks.npy
+```
+
+**Load a file with a specific base frame:**
+```bash
+python facelandmarkview.py sample_landmarks.npy --base-frame 10
+```
+
+**View help and options:**
+```bash
+python facelandmarkview.py --help
 ```
 
 ### Data Format

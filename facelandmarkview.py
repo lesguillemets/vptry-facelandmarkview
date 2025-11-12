@@ -4,6 +4,7 @@ Face Landmark Viewer - 3D visualization of face landmarks from .npy files using 
 """
 
 import sys
+import argparse
 from typing import Optional
 import numpy as np
 import numpy.typing as npt
@@ -187,17 +188,22 @@ class LandmarkGLWidget(QOpenGLWidget):
 class FaceLandmarkViewer(QMainWindow):
     """Main window for the face landmark viewer application"""
     
-    def __init__(self) -> None:
+    def __init__(self, initial_file: Optional[Path] = None, initial_base_frame: int = 0) -> None:
         super().__init__()
         self.data: Optional[npt.NDArray[np.float64]] = None
-        self.base_frame: int = 0
+        self.base_frame: int = initial_base_frame
         self.current_frame: int = 0
         self.show_vectors: bool = False
+        self.initial_file: Optional[Path] = initial_file
         
         self.setWindowTitle("Face Landmark Viewer (OpenGL)")
         self.setGeometry(100, 100, 1200, 800)
         
         self.init_ui()
+        
+        # Load initial file if provided
+        if self.initial_file is not None:
+            self.load_file_from_path(self.initial_file)
     
     def init_ui(self) -> None:
         """Initialize the user interface"""
@@ -257,7 +263,7 @@ class FaceLandmarkViewer(QMainWindow):
         main_layout.addWidget(self.info_label)
     
     def load_file(self) -> None:
-        """Load a .npy file"""
+        """Load a .npy file via file dialog"""
         file_path_str, _ = QFileDialog.getOpenFileName(
             self,
             "Open .npy File",
@@ -269,7 +275,10 @@ class FaceLandmarkViewer(QMainWindow):
             return
         
         file_path = Path(file_path_str)
-        
+        self.load_file_from_path(file_path)
+    
+    def load_file_from_path(self, file_path: Path) -> None:
+        """Load a .npy file from a given path"""
         try:
             self.data = np.load(file_path)
             
@@ -288,6 +297,13 @@ class FaceLandmarkViewer(QMainWindow):
             self.frame_slider.setMaximum(n_frames - 1)
             self.frame_slider.setEnabled(True)
             self.base_frame_spinbox.setMaximum(n_frames - 1)
+            
+            # Set base frame (use the value from initialization or 0)
+            if self.base_frame < n_frames:
+                self.base_frame_spinbox.setValue(self.base_frame)
+            else:
+                self.base_frame = 0
+                self.base_frame_spinbox.setValue(0)
             
             self.current_frame = 0
             self.frame_slider.setValue(0)
@@ -327,6 +343,25 @@ class FaceLandmarkViewer(QMainWindow):
 
 def main() -> None:
     """Main entry point"""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description='Face Landmark Viewer - 3D visualization of face landmarks from .npy files'
+    )
+    parser.add_argument(
+        'file',
+        type=Path,
+        nargs='?',
+        help='Path to .npy file to load on startup'
+    )
+    parser.add_argument(
+        '--base-frame',
+        type=int,
+        default=0,
+        help='Base frame index to use as reference (default: 0)'
+    )
+    
+    args = parser.parse_args()
+    
     # Set up OpenGL format
     fmt = QSurfaceFormat()
     fmt.setDepthBufferSize(24)
@@ -334,7 +369,7 @@ def main() -> None:
     QSurfaceFormat.setDefaultFormat(fmt)
     
     app = QApplication(sys.argv)
-    viewer = FaceLandmarkViewer()
+    viewer = FaceLandmarkViewer(initial_file=args.file, initial_base_frame=args.base_frame)
     viewer.show()
     sys.exit(app.exec())
 
