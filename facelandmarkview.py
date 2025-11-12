@@ -36,6 +36,8 @@ logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+POINT_SIZE = 2.0
+
 
 class LandmarkGLWidget(QOpenGLWidget):
     """OpenGL widget for rendering 3D landmarks"""
@@ -175,7 +177,7 @@ class LandmarkGLWidget(QOpenGLWidget):
             logger.debug(
                 f"Drawing {len(base_landmarks_valid)} base frame landmarks (blue)"
             )
-            gl.glPointSize(8.0)
+            gl.glPointSize(POINT_SIZE)
             gl.glColor4f(0.0, 0.0, 1.0, 0.6)
             gl.glBegin(gl.GL_POINTS)
             for i, point in enumerate(base_landmarks_valid):
@@ -192,7 +194,7 @@ class LandmarkGLWidget(QOpenGLWidget):
             logger.debug(
                 f"Drawing {len(current_landmarks_valid)} current frame landmarks (red)"
             )
-            gl.glPointSize(12.0)
+            gl.glPointSize(POINT_SIZE)
             gl.glColor4f(1.0, 0.0, 0.0, 0.8)
             gl.glBegin(gl.GL_POINTS)
             for i, point in enumerate(current_landmarks_valid):
