@@ -122,8 +122,35 @@ class LandmarkGLWidget(QOpenGLWidget):
         logger.info(f"Rendering frame {self.current_frame} (base: {self.base_frame})")
         logger.debug(f"Base landmarks shape: {base_landmarks.shape}, Current landmarks shape: {current_landmarks.shape}")
 
-        # Center the data
-        all_points = np.vstack([base_landmarks, current_landmarks])
+        # Filter out NaN values
+        base_valid_mask = ~np.isnan(base_landmarks).any(axis=1)
+        current_valid_mask = ~np.isnan(current_landmarks).any(axis=1)
+        
+        base_landmarks_valid = base_landmarks[base_valid_mask]
+        current_landmarks_valid = current_landmarks[current_valid_mask]
+        
+        nan_count_base = (~base_valid_mask).sum()
+        nan_count_current = (~current_valid_mask).sum()
+        
+        if nan_count_base > 0 or nan_count_current > 0:
+            logger.warning(f"Filtered out NaN landmarks: base={nan_count_base}, current={nan_count_current}")
+        
+        if len(base_landmarks_valid) == 0 and len(current_landmarks_valid) == 0:
+            logger.error("No valid landmarks to render (all contain NaN)")
+            return
+
+        # Center the data (using only valid points)
+        valid_points = []
+        if len(base_landmarks_valid) > 0:
+            valid_points.append(base_landmarks_valid)
+        if len(current_landmarks_valid) > 0:
+            valid_points.append(current_landmarks_valid)
+        
+        if len(valid_points) == 0:
+            logger.error("No valid points to calculate center")
+            return
+            
+        all_points = np.vstack(valid_points)
         center = all_points.mean(axis=0)
 
         # Calculate scale to fit in view
@@ -131,43 +158,52 @@ class LandmarkGLWidget(QOpenGLWidget):
         max_extent = extent.max()
         scale = 2.0 / max_extent if max_extent > 0 else 1.0
         logger.info(f"Data center: {center}, extent: {extent}, max_extent: {max_extent}, scale: {scale}")
+        logger.debug(f"Valid landmarks: base={len(base_landmarks_valid)}, current={len(current_landmarks_valid)}")
 
         # Draw base frame landmarks (blue circles)
-        logger.debug(f"Drawing {len(base_landmarks)} base frame landmarks (blue)")
-        gl.glPointSize(8.0)
-        gl.glColor4f(0.0, 0.0, 1.0, 0.6)
-        gl.glBegin(gl.GL_POINTS)
-        for i, point in enumerate(base_landmarks):
-            scaled_point = (point - center) * scale
-            if i == 0:  # Log first point as example
-                logger.debug(f"First base landmark: original={point}, scaled={scaled_point}")
-            gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
-        gl.glEnd()
+        if len(base_landmarks_valid) > 0:
+            logger.debug(f"Drawing {len(base_landmarks_valid)} base frame landmarks (blue)")
+            gl.glPointSize(8.0)
+            gl.glColor4f(0.0, 0.0, 1.0, 0.6)
+            gl.glBegin(gl.GL_POINTS)
+            for i, point in enumerate(base_landmarks_valid):
+                scaled_point = (point - center) * scale
+                if i == 0:  # Log first point as example
+                    logger.debug(f"First base landmark: original={point}, scaled={scaled_point}")
+                gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
+            gl.glEnd()
 
         # Draw current frame landmarks (red triangles - simulated with larger points)
-        logger.debug(f"Drawing {len(current_landmarks)} current frame landmarks (red)")
-        gl.glPointSize(12.0)
-        gl.glColor4f(1.0, 0.0, 0.0, 0.8)
-        gl.glBegin(gl.GL_POINTS)
-        for i, point in enumerate(current_landmarks):
-            scaled_point = (point - center) * scale
-            if i == 0:  # Log first point as example
-                logger.debug(f"First current landmark: original={point}, scaled={scaled_point}")
-            gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
-        gl.glEnd()
-
-        # Draw vectors if enabled
-        if self.show_vectors:
-            logger.debug(f"Drawing {len(base_landmarks)} vectors (green)")
-            gl.glLineWidth(1.0)
-            gl.glColor4f(0.0, 0.8, 0.0, 0.3)
-            gl.glBegin(gl.GL_LINES)
-            for base_pt, curr_pt in zip(base_landmarks, current_landmarks):
-                scaled_base = (base_pt - center) * scale
-                scaled_curr = (curr_pt - center) * scale
-                gl.glVertex3f(scaled_base[0], scaled_base[1], scaled_base[2])
-                gl.glVertex3f(scaled_curr[0], scaled_curr[1], scaled_curr[2])
+        if len(current_landmarks_valid) > 0:
+            logger.debug(f"Drawing {len(current_landmarks_valid)} current frame landmarks (red)")
+            gl.glPointSize(12.0)
+            gl.glColor4f(1.0, 0.0, 0.0, 0.8)
+            gl.glBegin(gl.GL_POINTS)
+            for i, point in enumerate(current_landmarks_valid):
+                scaled_point = (point - center) * scale
+                if i == 0:  # Log first point as example
+                    logger.debug(f"First current landmark: original={point}, scaled={scaled_point}")
+                gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
             gl.glEnd()
+
+        # Draw vectors if enabled (only for landmarks that are valid in both frames)
+        if self.show_vectors and len(base_landmarks_valid) > 0 and len(current_landmarks_valid) > 0:
+            # Match valid landmarks from both frames
+            both_valid_mask = base_valid_mask & current_valid_mask
+            base_landmarks_both = base_landmarks[both_valid_mask]
+            current_landmarks_both = current_landmarks[both_valid_mask]
+            
+            if len(base_landmarks_both) > 0:
+                logger.debug(f"Drawing {len(base_landmarks_both)} vectors (green)")
+                gl.glLineWidth(1.0)
+                gl.glColor4f(0.0, 0.8, 0.0, 0.3)
+                gl.glBegin(gl.GL_LINES)
+                for base_pt, curr_pt in zip(base_landmarks_both, current_landmarks_both):
+                    scaled_base = (base_pt - center) * scale
+                    scaled_curr = (curr_pt - center) * scale
+                    gl.glVertex3f(scaled_base[0], scaled_base[1], scaled_base[2])
+                    gl.glVertex3f(scaled_curr[0], scaled_curr[1], scaled_curr[2])
+                gl.glEnd()
 
         # Draw coordinate axes
         self._draw_axes()
@@ -335,9 +371,16 @@ class FaceLandmarkViewer(QMainWindow):
             n_frames, n_landmarks, _ = self.data.shape
             logger.info(f"Valid data: {n_frames} frames, {n_landmarks} landmarks")
 
+            # Check for NaN values
+            nan_count = np.isnan(self.data).sum()
+            if nan_count > 0:
+                nan_landmarks = np.isnan(self.data).any(axis=2).sum()
+                logger.warning(f"Data contains {nan_count} NaN values across {nan_landmarks} landmark positions")
+                logger.warning("NaN landmarks will be filtered out during rendering")
+
             # Log data range for debugging
-            logger.debug(f"Data min: {self.data.min()}, max: {self.data.max()}")
-            logger.debug(f"Data mean: {self.data.mean(axis=(0,1))}")
+            logger.debug(f"Data min: {np.nanmin(self.data)}, max: {np.nanmax(self.data)}")
+            logger.debug(f"Data mean: {np.nanmean(self.data, axis=(0,1))}")
 
             # Update UI
             self.frame_slider.setMaximum(n_frames - 1)
