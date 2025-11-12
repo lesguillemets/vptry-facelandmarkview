@@ -490,7 +490,7 @@ class FaceLandmarkViewer(QMainWindow):
     def on_show_vectors_changed(self, state: int) -> None:
         """Handle show vectors checkbox change"""
         # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
-        self.show_vectors = (state == Qt.CheckState.Checked.value)
+        self.show_vectors = state == Qt.CheckState.Checked.value
         logger.debug(f"Show vectors changed to: {self.show_vectors} (state={state})")
         if self.data is not None:
             self.gl_widget.set_show_vectors(self.show_vectors)
