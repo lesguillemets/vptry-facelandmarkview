@@ -3,18 +3,21 @@
 Demonstration script to generate visualization examples
 """
 
+from pathlib import Path
 import numpy as np
+import numpy.typing as npt
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def create_demo_visualization():
+def create_demo_visualization() -> None:
     """Create a sample visualization to demonstrate the application's output"""
     
     # Load sample data
-    data = np.load('sample_landmarks.npy')
+    data_path = Path('sample_landmarks.npy')
+    data: npt.NDArray[np.float64] = np.load(data_path)
     
     # Create figure with multiple subplots
     fig = plt.figure(figsize=(15, 10))
@@ -102,8 +105,9 @@ def create_demo_visualization():
     ax6.legend()
     
     plt.tight_layout()
-    plt.savefig('demo_visualization.png', dpi=150, bbox_inches='tight')
-    print("✓ Demo visualization saved to demo_visualization.png")
+    demo_path = Path('demo_visualization.png')
+    plt.savefig(demo_path, dpi=150, bbox_inches='tight')
+    print(f"✓ Demo visualization saved to {demo_path}")
     
     # Create a summary figure
     fig2, axes = plt.subplots(1, 2, figsize=(12, 5), subplot_kw={'projection': '3d'})
@@ -136,8 +140,9 @@ def create_demo_visualization():
     axes[1].legend()
     
     plt.tight_layout()
-    plt.savefig('summary_visualization.png', dpi=150, bbox_inches='tight')
-    print("✓ Summary visualization saved to summary_visualization.png")
+    summary_path = Path('summary_visualization.png')
+    plt.savefig(summary_path, dpi=150, bbox_inches='tight')
+    print(f"✓ Summary visualization saved to {summary_path}")
 
 
 if __name__ == '__main__':

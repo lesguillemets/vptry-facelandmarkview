@@ -3,11 +3,17 @@
 Generate sample face landmark data for testing
 """
 
+from typing import Union
 import numpy as np
+import numpy.typing as npt
 from pathlib import Path
 
 
-def generate_sample_data(n_frames=50, n_landmarks=68, output_file='sample_landmarks.npy'):
+def generate_sample_data(
+    n_frames: int = 50, 
+    n_landmarks: int = 68, 
+    output_file: Union[str, Path] = 'sample_landmarks.npy'
+) -> npt.NDArray[np.float64]:
     """
     Generate sample face landmark data with animation
     
@@ -16,6 +22,7 @@ def generate_sample_data(n_frames=50, n_landmarks=68, output_file='sample_landma
         n_landmarks: Number of landmarks (default 68 for face)
         output_file: Output filename
     """
+    output_path = Path(output_file)
     # Create base landmarks in a face-like pattern
     # Arrange landmarks in a semi-circular pattern (simplified face)
     angles = np.linspace(0, 2 * np.pi, n_landmarks)
@@ -59,8 +66,8 @@ def generate_sample_data(n_frames=50, n_landmarks=68, output_file='sample_landma
         data[frame, :, 2] = z
     
     # Save to file
-    np.save(output_file, data)
-    print(f"Generated sample data: {output_file}")
+    np.save(output_path, data)
+    print(f"Generated sample data: {output_path}")
     print(f"Shape: {data.shape}")
     print(f"Frames: {n_frames}, Landmarks: {n_landmarks}")
     

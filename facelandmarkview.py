@@ -4,7 +4,9 @@ Face Landmark Viewer - 3D visualization of face landmarks from .npy files
 """
 
 import sys
+from typing import Optional
 import numpy as np
+import numpy.typing as npt
 from pathlib import Path
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -21,19 +23,19 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 - Required for 3D projecti
 class FaceLandmarkViewer(QMainWindow):
     """Main window for the face landmark viewer application"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.data = None
-        self.base_frame = 0
-        self.current_frame = 0
-        self.show_vectors = False
+        self.data: Optional[npt.NDArray[np.float64]] = None
+        self.base_frame: int = 0
+        self.current_frame: int = 0
+        self.show_vectors: bool = False
         
         self.setWindowTitle("Face Landmark Viewer")
         self.setGeometry(100, 100, 1200, 800)
         
         self.init_ui()
     
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface"""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -92,17 +94,19 @@ class FaceLandmarkViewer(QMainWindow):
         self.info_label = QLabel("Load a .npy file to begin")
         main_layout.addWidget(self.info_label)
     
-    def load_file(self):
+    def load_file(self) -> None:
         """Load a .npy file"""
-        file_path, _ = QFileDialog.getOpenFileName(
+        file_path_str, _ = QFileDialog.getOpenFileName(
             self,
             "Open .npy File",
             "",
             "NumPy Files (*.npy);;All Files (*)"
         )
         
-        if not file_path:
+        if not file_path_str:
             return
+        
+        file_path = Path(file_path_str)
         
         try:
             self.data = np.load(file_path)
@@ -127,7 +131,7 @@ class FaceLandmarkViewer(QMainWindow):
             self.frame_slider.setValue(0)
             
             self.info_label.setText(
-                f"Loaded: {Path(file_path).name} - "
+                f"Loaded: {file_path.name} - "
                 f"{n_frames} frames, {n_landmarks} landmarks"
             )
             
@@ -137,26 +141,26 @@ class FaceLandmarkViewer(QMainWindow):
             self.info_label.setText(f"Error loading file: {str(e)}")
             self.data = None
     
-    def on_frame_changed(self, value):
+    def on_frame_changed(self, value: int) -> None:
         """Handle frame slider change"""
         self.current_frame = value
         if self.data is not None:
             self.frame_label.setText(f"{value} / {self.data.shape[0] - 1}")
             self.update_plot()
     
-    def on_base_frame_changed(self, value):
+    def on_base_frame_changed(self, value: int) -> None:
         """Handle base frame spinbox change"""
         self.base_frame = value
         if self.data is not None:
             self.update_plot()
     
-    def on_show_vectors_changed(self, state):
+    def on_show_vectors_changed(self, state: int) -> None:
         """Handle show vectors checkbox change"""
         self.show_vectors = (state == Qt.Checked)
         if self.data is not None:
             self.update_plot()
     
-    def update_plot(self):
+    def update_plot(self) -> None:
         """Update the 3D plot"""
         if self.data is None:
             return
@@ -229,7 +233,7 @@ class FaceLandmarkViewer(QMainWindow):
         self.canvas.draw()
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     app = QApplication(sys.argv)
     viewer = FaceLandmarkViewer()
