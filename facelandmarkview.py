@@ -366,7 +366,7 @@ class FaceLandmarkViewer(QMainWindow):
 
         control_layout.addStretch()
 
-        main_layout.addLayout(control_layout, 0)
+        main_layout.addLayout(control_layout, stretch=0)
 
         # Frame slider
         slider_layout = QHBoxLayout()
@@ -383,17 +383,17 @@ class FaceLandmarkViewer(QMainWindow):
         self.frame_label = QLabel("0 / 0")
         slider_layout.addWidget(self.frame_label)
 
-        main_layout.addLayout(slider_layout, 0)
+        main_layout.addLayout(slider_layout, stretch=0)
 
         # OpenGL widget for 3D visualization
         self.gl_widget = LandmarkGLWidget()
-        main_layout.addWidget(self.gl_widget, 1)
+        main_layout.addWidget(self.gl_widget, stretch=1)
 
         # Info label
         self.info_label = QLabel(
             "Load a .npy file to begin. Use mouse to rotate (drag) and zoom (wheel)."
         )
-        main_layout.addWidget(self.info_label, 0)
+        main_layout.addWidget(self.info_label, stretch=0)
 
     def load_file(self) -> None:
         """Load a .npy file via file dialog"""
