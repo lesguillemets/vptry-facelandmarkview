@@ -37,6 +37,7 @@ logging.basicConfig(
 )
 
 POINT_SIZE = 2.0
+SCALE_MARGIN = 1.2  # 20% margin for scaling
 
 
 class LandmarkGLWidget(QOpenGLWidget):
@@ -102,6 +103,69 @@ class LandmarkGLWidget(QOpenGLWidget):
         glu.gluPerspective(45.0, aspect, 0.1, 100.0)
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
+    def _filter_nan_landmarks(
+        self, landmarks: npt.NDArray[np.float64]
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
+        """Filter out landmarks with NaN values
+        
+        Returns:
+            Tuple of (valid_landmarks, valid_mask)
+        """
+        valid_mask = ~np.isnan(landmarks).any(axis=1)
+        valid_landmarks = landmarks[valid_mask]
+        return valid_landmarks, valid_mask
+
+    def _calculate_center_and_scale(
+        self, base_landmarks: npt.NDArray[np.float64]
+    ) -> tuple[npt.NDArray[np.float64], float]:
+        """Calculate center and scale from base frame landmarks with margin
+        
+        Args:
+            base_landmarks: Base frame landmarks (only valid ones)
+            
+        Returns:
+            Tuple of (center, scale)
+        """
+        center = base_landmarks.mean(axis=0)
+        extent = base_landmarks.max(axis=0) - base_landmarks.min(axis=0)
+        max_extent = extent.max()
+        # Apply margin to give 20% extra space
+        scale = (2.0 / SCALE_MARGIN) / max_extent if max_extent > 0 else 1.0
+        return center, scale
+
+    def _draw_landmarks(
+        self,
+        landmarks: npt.NDArray[np.float64],
+        center: npt.NDArray[np.float64],
+        scale: float,
+        color: tuple[float, float, float, float],
+        label: str,
+    ) -> None:
+        """Draw landmarks as points
+        
+        Args:
+            landmarks: Valid landmarks to draw
+            center: Data center for transformation
+            scale: Scale factor for transformation
+            color: RGBA color tuple
+            label: Label for logging
+        """
+        if len(landmarks) == 0:
+            return
+            
+        logger.debug(f"Drawing {len(landmarks)} {label} landmarks")
+        gl.glPointSize(POINT_SIZE)
+        gl.glColor4f(*color)
+        gl.glBegin(gl.GL_POINTS)
+        for i, point in enumerate(landmarks):
+            # Flip Y coordinate to fix upside-down display
+            scaled_point = (point - center) * scale
+            scaled_point[1] = -scaled_point[1]  # Flip Y
+            if i == 0:  # Log first point as example
+                logger.debug(f"First {label} landmark: original={point}, scaled={scaled_point}")
+            gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
+        gl.glEnd()
+
     def paintGL(self) -> None:
         """Render the scene"""
         logger.debug("paintGL called")
@@ -128,12 +192,9 @@ class LandmarkGLWidget(QOpenGLWidget):
             f"Base landmarks shape: {base_landmarks.shape}, Current landmarks shape: {current_landmarks.shape}"
         )
 
-        # Filter out NaN values
-        base_valid_mask = ~np.isnan(base_landmarks).any(axis=1)
-        current_valid_mask = ~np.isnan(current_landmarks).any(axis=1)
-
-        base_landmarks_valid = base_landmarks[base_valid_mask]
-        current_landmarks_valid = current_landmarks[current_valid_mask]
+        # Filter out NaN values using helper function
+        base_landmarks_valid, base_valid_mask = self._filter_nan_landmarks(base_landmarks)
+        current_landmarks_valid, current_valid_mask = self._filter_nan_landmarks(current_landmarks)
 
         nan_count_base = (~base_valid_mask).sum()
         nan_count_current = (~current_valid_mask).sum()
@@ -143,75 +204,32 @@ class LandmarkGLWidget(QOpenGLWidget):
                 f"Filtered out NaN landmarks: base={nan_count_base}, current={nan_count_current}"
             )
 
-        if len(base_landmarks_valid) == 0 and len(current_landmarks_valid) == 0:
-            logger.error("No valid landmarks to render (all contain NaN)")
+        if len(base_landmarks_valid) == 0:
+            logger.error("No valid base landmarks to render (all contain NaN)")
             return
 
-        # Center the data (using only valid points)
-        valid_points = []
-        if len(base_landmarks_valid) > 0:
-            valid_points.append(base_landmarks_valid)
-        if len(current_landmarks_valid) > 0:
-            valid_points.append(current_landmarks_valid)
-
-        if len(valid_points) == 0:
-            logger.error("No valid points to calculate center")
-            return
-
-        all_points = np.vstack(valid_points)
-        center = all_points.mean(axis=0)
-
-        # Calculate scale to fit in view
-        extent = all_points.max(axis=0) - all_points.min(axis=0)
-        max_extent = extent.max()
-        scale = 2.0 / max_extent if max_extent > 0 else 1.0
+        # Calculate center and scale from base frame only (with 20% margin)
+        center, scale = self._calculate_center_and_scale(base_landmarks_valid)
+        
         logger.info(
-            f"Data center: {center}, extent: {extent}, max_extent: {max_extent}, scale: {scale}"
+            f"Data center: {center}, scale: {scale} (calculated from base frame with {SCALE_MARGIN}x margin)"
         )
         logger.debug(
             f"Valid landmarks: base={len(base_landmarks_valid)}, current={len(current_landmarks_valid)}"
         )
 
-        # Draw base frame landmarks (blue circles)
-        if len(base_landmarks_valid) > 0:
-            logger.debug(
-                f"Drawing {len(base_landmarks_valid)} base frame landmarks (blue)"
-            )
-            gl.glPointSize(POINT_SIZE)
-            gl.glColor4f(0.0, 0.0, 1.0, 0.6)
-            gl.glBegin(gl.GL_POINTS)
-            for i, point in enumerate(base_landmarks_valid):
-                scaled_point = (point - center) * scale
-                if i == 0:  # Log first point as example
-                    logger.debug(
-                        f"First base landmark: original={point}, scaled={scaled_point}"
-                    )
-                gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
-            gl.glEnd()
+        # Draw base frame landmarks (blue)
+        self._draw_landmarks(
+            base_landmarks_valid, center, scale, (0.0, 0.0, 1.0, 0.6), "base"
+        )
 
-        # Draw current frame landmarks (red triangles - simulated with larger points)
-        if len(current_landmarks_valid) > 0:
-            logger.debug(
-                f"Drawing {len(current_landmarks_valid)} current frame landmarks (red)"
-            )
-            gl.glPointSize(POINT_SIZE)
-            gl.glColor4f(1.0, 0.0, 0.0, 0.8)
-            gl.glBegin(gl.GL_POINTS)
-            for i, point in enumerate(current_landmarks_valid):
-                scaled_point = (point - center) * scale
-                if i == 0:  # Log first point as example
-                    logger.debug(
-                        f"First current landmark: original={point}, scaled={scaled_point}"
-                    )
-                gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
-            gl.glEnd()
+        # Draw current frame landmarks (red)
+        self._draw_landmarks(
+            current_landmarks_valid, center, scale, (1.0, 0.0, 0.0, 0.8), "current"
+        )
 
         # Draw vectors if enabled (only for landmarks that are valid in both frames)
-        if (
-            self.show_vectors
-            and len(base_landmarks_valid) > 0
-            and len(current_landmarks_valid) > 0
-        ):
+        if self.show_vectors and len(current_landmarks_valid) > 0:
             # Match valid landmarks from both frames
             both_valid_mask = base_valid_mask & current_valid_mask
             base_landmarks_both = base_landmarks[both_valid_mask]
@@ -227,6 +245,9 @@ class LandmarkGLWidget(QOpenGLWidget):
                 ):
                     scaled_base = (base_pt - center) * scale
                     scaled_curr = (curr_pt - center) * scale
+                    # Flip Y coordinates
+                    scaled_base[1] = -scaled_base[1]
+                    scaled_curr[1] = -scaled_curr[1]
                     gl.glVertex3f(scaled_base[0], scaled_base[1], scaled_base[2])
                     gl.glVertex3f(scaled_curr[0], scaled_curr[1], scaled_curr[2])
                 gl.glEnd()
@@ -280,7 +301,7 @@ class LandmarkGLWidget(QOpenGLWidget):
             self.zoom *= 0.9
         else:
             self.zoom *= 1.1
-        self.zoom = max(1.0, min(10.0, self.zoom))
+        self.zoom = max(1.0, min(20.0, self.zoom))
         self.update()
 
 
