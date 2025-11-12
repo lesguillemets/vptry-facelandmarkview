@@ -5,10 +5,18 @@ Face Landmark Viewer - 3D visualization of face landmarks from .npy files using 
 
 import sys
 import argparse
+import logging
 from typing import Optional
 import numpy as np
 import numpy.typing as npt
 from pathlib import Path
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -47,26 +55,31 @@ class LandmarkGLWidget(QOpenGLWidget):
 
     def set_data(self, data: npt.NDArray[np.float64]) -> None:
         """Set the landmark data"""
+        logger.info(f"Setting data with shape: {data.shape}")
         self.data = data
         self.update()
 
     def set_base_frame(self, frame: int) -> None:
         """Set the base frame"""
+        logger.debug(f"Setting base frame to: {frame}")
         self.base_frame = frame
         self.update()
 
     def set_current_frame(self, frame: int) -> None:
         """Set the current frame"""
+        logger.debug(f"Setting current frame to: {frame}")
         self.current_frame = frame
         self.update()
 
     def set_show_vectors(self, show: bool) -> None:
         """Set whether to show vectors"""
+        logger.debug(f"Setting show_vectors to: {show}")
         self.show_vectors = show
         self.update()
 
     def initializeGL(self) -> None:
         """Initialize OpenGL"""
+        logger.info("Initializing OpenGL context")
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
@@ -78,15 +91,18 @@ class LandmarkGLWidget(QOpenGLWidget):
 
     def resizeGL(self, w: int, h: int) -> None:
         """Handle window resize"""
+        logger.info(f"Resize GL: width={w}, height={h}")
         gl.glViewport(0, 0, w, h)
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
         aspect = w / h if h > 0 else 1.0
+        logger.debug(f"Aspect ratio: {aspect}")
         glu.gluPerspective(45.0, aspect, 0.1, 100.0)
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
     def paintGL(self) -> None:
         """Render the scene"""
+        logger.debug("paintGL called")
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         gl.glLoadIdentity()
 
@@ -94,13 +110,17 @@ class LandmarkGLWidget(QOpenGLWidget):
         gl.glTranslatef(0.0, 0.0, -self.zoom)
         gl.glRotatef(self.rotation_x, 1.0, 0.0, 0.0)
         gl.glRotatef(self.rotation_y, 0.0, 1.0, 0.0)
+        logger.debug(f"Camera: zoom={self.zoom}, rotation_x={self.rotation_x}, rotation_y={self.rotation_y}")
 
         if self.data is None:
+            logger.warning("paintGL: No data to render")
             return
 
         # Get landmark data
         base_landmarks = self.data[self.base_frame]
         current_landmarks = self.data[self.current_frame]
+        logger.info(f"Rendering frame {self.current_frame} (base: {self.base_frame})")
+        logger.debug(f"Base landmarks shape: {base_landmarks.shape}, Current landmarks shape: {current_landmarks.shape}")
 
         # Center the data
         all_points = np.vstack([base_landmarks, current_landmarks])
@@ -110,27 +130,35 @@ class LandmarkGLWidget(QOpenGLWidget):
         extent = all_points.max(axis=0) - all_points.min(axis=0)
         max_extent = extent.max()
         scale = 2.0 / max_extent if max_extent > 0 else 1.0
+        logger.info(f"Data center: {center}, extent: {extent}, max_extent: {max_extent}, scale: {scale}")
 
         # Draw base frame landmarks (blue circles)
+        logger.debug(f"Drawing {len(base_landmarks)} base frame landmarks (blue)")
         gl.glPointSize(8.0)
         gl.glColor4f(0.0, 0.0, 1.0, 0.6)
         gl.glBegin(gl.GL_POINTS)
-        for point in base_landmarks:
+        for i, point in enumerate(base_landmarks):
             scaled_point = (point - center) * scale
+            if i == 0:  # Log first point as example
+                logger.debug(f"First base landmark: original={point}, scaled={scaled_point}")
             gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
         gl.glEnd()
 
         # Draw current frame landmarks (red triangles - simulated with larger points)
+        logger.debug(f"Drawing {len(current_landmarks)} current frame landmarks (red)")
         gl.glPointSize(12.0)
         gl.glColor4f(1.0, 0.0, 0.0, 0.8)
         gl.glBegin(gl.GL_POINTS)
-        for point in current_landmarks:
+        for i, point in enumerate(current_landmarks):
             scaled_point = (point - center) * scale
+            if i == 0:  # Log first point as example
+                logger.debug(f"First current landmark: original={point}, scaled={scaled_point}")
             gl.glVertex3f(scaled_point[0], scaled_point[1], scaled_point[2])
         gl.glEnd()
 
         # Draw vectors if enabled
         if self.show_vectors:
+            logger.debug(f"Drawing {len(base_landmarks)} vectors (green)")
             gl.glLineWidth(1.0)
             gl.glColor4f(0.0, 0.8, 0.0, 0.3)
             gl.glBegin(gl.GL_LINES)
@@ -289,11 +317,14 @@ class FaceLandmarkViewer(QMainWindow):
 
     def load_file_from_path(self, file_path: Path) -> None:
         """Load a .npy file from a given path"""
+        logger.info(f"Loading file: {file_path}")
         try:
             self.data = np.load(file_path)
+            logger.info(f"Loaded data shape: {self.data.shape}")
 
             # Validate data shape
             if len(self.data.shape) != 3 or self.data.shape[2] != 3:
+                logger.error(f"Invalid data shape: {self.data.shape}")
                 self.info_label.setText(
                     f"Error: Invalid data shape {self.data.shape}. "
                     "Expected (n_frames, n_landmarks, 3)"
@@ -302,6 +333,11 @@ class FaceLandmarkViewer(QMainWindow):
                 return
 
             n_frames, n_landmarks, _ = self.data.shape
+            logger.info(f"Valid data: {n_frames} frames, {n_landmarks} landmarks")
+
+            # Log data range for debugging
+            logger.debug(f"Data min: {self.data.min()}, max: {self.data.max()}")
+            logger.debug(f"Data mean: {self.data.mean(axis=(0,1))}")
 
             # Update UI
             self.frame_slider.setMaximum(n_frames - 1)
@@ -311,9 +347,11 @@ class FaceLandmarkViewer(QMainWindow):
             # Set base frame (use the value from initialization or 0)
             if self.base_frame < n_frames:
                 self.base_frame_spinbox.setValue(self.base_frame)
+                logger.debug(f"Base frame set to: {self.base_frame}")
             else:
                 self.base_frame = 0
                 self.base_frame_spinbox.setValue(0)
+                logger.debug("Base frame reset to 0")
 
             self.current_frame = 0
             self.frame_slider.setValue(0)
@@ -325,9 +363,11 @@ class FaceLandmarkViewer(QMainWindow):
             )
 
             # Update OpenGL widget
+            logger.info("Updating OpenGL widget with data")
             self.gl_widget.set_data(self.data)
 
         except Exception as e:
+            logger.exception(f"Error loading file: {str(e)}")
             self.info_label.setText(f"Error loading file: {str(e)}")
             self.data = None
 
