@@ -1,6 +1,6 @@
 # Face Landmark Viewer
 
-A PySide6-based 3D visualization tool for viewing face landmark data from .npy files.
+A PySide6-based 3D visualization tool for viewing face landmark data from .npy files using OpenGL rendering.
 
 ## Features
 
@@ -8,14 +8,16 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 - Interactive frame navigation using a slider
 - Display both current frame and base frame landmarks
 - Optional vector visualization showing movement from base frame to current frame
-- 3D interactive plot with rotation and zoom capabilities
+- Hardware-accelerated 3D rendering using OpenGL
+- Interactive mouse controls for rotation (drag) and zoom (wheel)
 
 ## Requirements
 
 - Python 3.8+
 - PySide6
 - NumPy
-- Matplotlib
+- PyOpenGL
+- PyOpenGL-accelerate (optional, for better performance)
 
 ## Installation
 
@@ -55,13 +57,26 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 
 ## Controls
 
+### UI Controls
 - **Load .npy File**: Open a file dialog to load landmark data
-- **Base Frame**: Select which frame to use as the base reference (blue markers)
+- **Base Frame**: Select which frame to use as the base reference (blue points)
 - **Show Vectors**: Toggle visualization of vectors from base frame to current frame
 - **Frame Slider**: Navigate through frames to see animation
 
+### Mouse Controls
+- **Left Click + Drag**: Rotate the 3D view
+- **Mouse Wheel**: Zoom in/out
+
 ## Visualization
 
-- **Blue circles**: Base frame landmarks (reference position)
-- **Red triangles**: Current frame landmarks
+- **Blue points**: Base frame landmarks (reference position)
+- **Red points**: Current frame landmarks (larger)
 - **Green lines**: Vectors from base to current frame (when enabled)
+- **RGB axes**: Red (X), Green (Y), Blue (Z) coordinate axes
+
+## Implementation Notes
+
+The application uses:
+- **Type annotations** throughout for better code clarity and IDE support
+- **pathlib.Path** for cross-platform file path handling
+- **OpenGL** for hardware-accelerated 3D rendering (instead of matplotlib)

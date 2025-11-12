@@ -35,9 +35,9 @@ def test_load_data_programmatically():
     
     print(f"  ✓ Data loaded: {n_frames} frames, {n_landmarks} landmarks")
     
-    # Test plot update
-    viewer.update_plot()
-    print(f"  ✓ Plot updated successfully")
+    # Test OpenGL widget update
+    viewer.gl_widget.set_data(data)
+    print(f"  ✓ OpenGL widget updated successfully")
     
     return viewer
 
@@ -74,9 +74,9 @@ def test_base_frame_change(viewer):
     assert viewer.base_frame == 10, "Base frame should be 10"
     print(f"  ✓ Base frame changed to 10")
     
-    # Test plot updates with different base frame
-    viewer.update_plot()
-    print(f"  ✓ Plot updated with new base frame")
+    # Test OpenGL widget updates with different base frame
+    assert viewer.gl_widget.base_frame == 10, "OpenGL widget base frame should be 10"
+    print(f"  ✓ OpenGL widget updated with new base frame")
     
     # Reset base frame
     viewer.base_frame_spinbox.setValue(0)
@@ -92,19 +92,19 @@ def test_vector_display(viewer):
     viewer.show_vectors_checkbox.setChecked(True)
     viewer.on_show_vectors_changed(Qt.Checked)
     assert viewer.show_vectors == True, "Vectors should be enabled"
+    assert viewer.gl_widget.show_vectors == True, "OpenGL widget vectors should be enabled"
     print(f"  ✓ Vectors enabled")
     
-    viewer.update_plot()
-    print(f"  ✓ Plot updated with vectors")
+    print(f"  ✓ OpenGL widget updated with vectors")
     
     # Test disabling vectors - manually call the handler
     viewer.show_vectors_checkbox.setChecked(False)
     viewer.on_show_vectors_changed(Qt.Unchecked)
     assert viewer.show_vectors == False, "Vectors should be disabled"
+    assert viewer.gl_widget.show_vectors == False, "OpenGL widget vectors should be disabled"
     print(f"  ✓ Vectors disabled")
     
-    viewer.update_plot()
-    print(f"  ✓ Plot updated without vectors")
+    print(f"  ✓ OpenGL widget updated without vectors")
 
 
 def test_data_access():

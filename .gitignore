@@ -37,6 +37,10 @@ env/
 *.png
 *.jpg
 
+# Backup files
+*_matplotlib.py
+*_backup.py
+
 # OS
 .DS_Store
 Thumbs.db
