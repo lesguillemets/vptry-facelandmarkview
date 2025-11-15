@@ -8,6 +8,7 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 - Interactive frame navigation using a slider
 - Display both current frame and base frame landmarks
 - Optional vector visualization showing movement from base frame to current frame
+- **Face alignment** to remove head movement effects and highlight facial expressions
 - Hardware-accelerated 3D rendering using OpenGL
 - Interactive mouse controls for rotation (drag) and zoom (wheel)
 
@@ -92,6 +93,7 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 - **Load .npy File**: Open a file dialog to load landmark data
 - **Base Frame**: Select which frame to use as the base reference (blue points)
 - **Show Vectors**: Toggle visualization of vectors from base frame to current frame
+- **Align Faces**: Align current frame to base frame to remove head movement (translation and rotation), making facial expression changes easier to see
 - **Frame Slider**: Navigate through frames to see animation
 
 ### Mouse Controls
@@ -104,6 +106,16 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 - **Red points**: Current frame landmarks (larger)
 - **Green lines**: Vectors from base to current frame (when enabled)
 - **RGB axes**: Red (X), Green (Y), Blue (Z) coordinate axes
+
+### Face Alignment
+
+The "Align Faces" feature removes the effects of head movement (translation and rotation) to make facial expression changes more visible. When enabled:
+
+- The current frame landmarks are aligned to the base frame using Procrustes alignment (Kabsch algorithm)
+- This computes the optimal rigid transformation (rotation + translation) that best matches the two point sets
+- Head position and orientation differences are removed
+- Facial expression changes (relative movements of landmarks) are preserved
+- Useful for analyzing subtle facial expressions without distraction from head movement
 
 ## Project Structure
 
