@@ -37,7 +37,7 @@ def test_load_data_programmatically():
 
     # Test OpenGL widget update
     viewer.gl_widget.set_data(data)
-    print(f"  ✓ OpenGL widget updated successfully")
+    print("  ✓ OpenGL widget updated successfully")
 
     return viewer
 
@@ -64,7 +64,7 @@ def test_frame_navigation(viewer):
     # Test moving back to first frame
     viewer.frame_slider.setValue(0)
     assert viewer.current_frame == 0, "Current frame should be 0"
-    print(f"  ✓ Moved back to frame 0")
+    print("  ✓ Moved back to frame 0")
 
 
 def test_base_frame_change(viewer):
@@ -74,16 +74,16 @@ def test_base_frame_change(viewer):
     # Test changing base frame
     viewer.base_frame_spinbox.setValue(10)
     assert viewer.base_frame == 10, "Base frame should be 10"
-    print(f"  ✓ Base frame changed to 10")
+    print("  ✓ Base frame changed to 10")
 
     # Test OpenGL widget updates with different base frame
     assert viewer.gl_widget.base_frame == 10, "OpenGL widget base frame should be 10"
-    print(f"  ✓ OpenGL widget updated with new base frame")
+    print("  ✓ OpenGL widget updated with new base frame")
 
     # Reset base frame
     viewer.base_frame_spinbox.setValue(0)
     assert viewer.base_frame == 0, "Base frame should be 0"
-    print(f"  ✓ Base frame reset to 0")
+    print("  ✓ Base frame reset to 0")
 
 
 def test_vector_display(viewer):
@@ -97,9 +97,9 @@ def test_vector_display(viewer):
     assert viewer.gl_widget.show_vectors == True, (
         "OpenGL widget vectors should be enabled"
     )
-    print(f"  ✓ Vectors enabled")
+    print("  ✓ Vectors enabled")
 
-    print(f"  ✓ OpenGL widget updated with vectors")
+    print("  ✓ OpenGL widget updated with vectors")
 
     # Test disabling vectors - manually call the handler with integer value
     viewer.show_vectors_checkbox.setChecked(False)
@@ -108,9 +108,9 @@ def test_vector_display(viewer):
     assert viewer.gl_widget.show_vectors == False, (
         "OpenGL widget vectors should be disabled"
     )
-    print(f"  ✓ Vectors disabled")
+    print("  ✓ Vectors disabled")
 
-    print(f"  ✓ OpenGL widget updated without vectors")
+    print("  ✓ OpenGL widget updated without vectors")
 
 
 def test_data_access():

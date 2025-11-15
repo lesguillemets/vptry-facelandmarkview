@@ -36,16 +36,20 @@ def __getattr__(name: str):
     """Lazy import of Qt-dependent classes and functions"""
     if name == "FaceLandmarkViewer":
         from vptry_facelandmarkview import FaceLandmarkViewer
+
         return FaceLandmarkViewer
     elif name == "LandmarkGLWidget":
         from vptry_facelandmarkview import LandmarkGLWidget
+
         return LandmarkGLWidget
     elif name == "main":
         from vptry_facelandmarkview import main
+
         return main
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 if __name__ == "__main__":
     from vptry_facelandmarkview import main
+
     main()
