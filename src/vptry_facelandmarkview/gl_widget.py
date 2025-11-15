@@ -18,6 +18,7 @@ from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
     calculate_center_and_scale,
     draw_landmarks,
+    align_landmarks_to_base,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         self.base_frame: int = 0
         self.current_frame: int = 0
         self.show_vectors: bool = False
+        self.align_faces: bool = False
 
         # Camera controls
         self.rotation_x: float = 20.0
@@ -61,6 +63,12 @@ class LandmarkGLWidget(QOpenGLWidget):
         """Set whether to show vectors"""
         logger.debug(f"Setting show_vectors to: {show}")
         self.show_vectors = show
+        self.update()
+
+    def set_align_faces(self, align: bool) -> None:
+        """Set whether to align faces to base frame"""
+        logger.debug(f"Setting align_faces to: {align}")
+        self.align_faces = align
         self.update()
 
     def initializeGL(self) -> None:
@@ -145,9 +153,16 @@ class LandmarkGLWidget(QOpenGLWidget):
             base_landmarks_valid, center, scale, (0.0, 0.0, 1.0, 0.6), "base"
         )
 
+        # Create alignment function if enabled
+        alignment_fn = None
+        if self.align_faces and len(current_landmarks_valid) > 0:
+            # Create a partial function that aligns to base landmarks
+            alignment_fn = lambda lm: align_landmarks_to_base(lm, base_landmarks_valid)
+
         # Draw current frame landmarks (red)
         draw_landmarks(
-            current_landmarks_valid, center, scale, (1.0, 0.0, 0.0, 0.8), "current"
+            current_landmarks_valid, center, scale, (1.0, 0.0, 0.0, 0.8), "current",
+            alignment_fn=alignment_fn
         )
 
         # Draw vectors if enabled (only for landmarks that are valid in both frames)
@@ -156,6 +171,12 @@ class LandmarkGLWidget(QOpenGLWidget):
             both_valid_mask = base_valid_mask & current_valid_mask
             base_landmarks_both = base_landmarks[both_valid_mask]
             current_landmarks_both = current_landmarks[both_valid_mask]
+
+            # Apply alignment to current landmarks if enabled
+            if self.align_faces and len(current_landmarks_both) > 0:
+                current_landmarks_both = align_landmarks_to_base(
+                    current_landmarks_both, base_landmarks_both
+                )
 
             if len(base_landmarks_both) > 0:
                 logger.debug(f"Drawing {len(base_landmarks_both)} vectors (green)")
