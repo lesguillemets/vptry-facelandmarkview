@@ -52,4 +52,4 @@ def __getattr__(name: str):
 if __name__ == "__main__":
     from vptry_facelandmarkview import main
 
-    main()
+    main.main()
