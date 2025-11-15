@@ -12,12 +12,12 @@ from pathlib import Path
 def test_data_loading():
     """Test that sample data can be loaded"""
     data = np.load("sample_landmarks.npy")
-    print(f"✓ Data loaded successfully")
+    print("✓ Data loaded successfully")
     print(f"  Shape: {data.shape}")
 
     assert len(data.shape) == 3, "Data should be 3D"
     assert data.shape[2] == 3, "Last dimension should be 3 (x, y, z)"
-    print(f"✓ Data shape is valid")
+    print("✓ Data shape is valid")
 
     return data
 
@@ -27,19 +27,11 @@ def test_imports():
     try:
         from PySide6.QtWidgets import QApplication
 
-        print(f"✓ PySide6.QtWidgets imported")
+        print("✓ PySide6.QtWidgets imported")
 
-        import matplotlib
+        import vptry_facelandmarkview
 
-        print(f"✓ matplotlib imported")
-
-        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-
-        print(f"✓ matplotlib Qt backend imported")
-
-        import facelandmarkview
-
-        print(f"✓ facelandmarkview module imported")
+        print("✓ vptry_facelandmarkview module imported")
 
         return True
     except ImportError as e:
@@ -51,14 +43,14 @@ def test_app_instantiation():
     """Test that the application can be instantiated"""
     try:
         from PySide6.QtWidgets import QApplication
-        from facelandmarkview import FaceLandmarkViewer
+        from vptry_facelandmarkview import FaceLandmarkViewer
 
         app = QApplication.instance()
         if app is None:
             app = QApplication(sys.argv)
 
         viewer = FaceLandmarkViewer()
-        print(f"✓ Application instantiated successfully")
+        print("✓ Application instantiated successfully")
         print(f"  Window title: {viewer.windowTitle()}")
 
         # Test initial state
@@ -66,7 +58,7 @@ def test_app_instantiation():
         assert viewer.base_frame == 0, "Initial base frame should be 0"
         assert viewer.current_frame == 0, "Initial current frame should be 0"
         assert viewer.show_vectors == False, "Initial show_vectors should be False"
-        print(f"✓ Initial state is correct")
+        print("✓ Initial state is correct")
 
         return True
     except Exception as e:

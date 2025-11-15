@@ -22,6 +22,11 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 ## Installation
 
 ```bash
+pip install -e .
+```
+
+Or install from requirements.txt:
+```bash
 pip install -r requirements.txt
 ```
 
@@ -29,24 +34,34 @@ pip install -r requirements.txt
 
 ### Running the Application
 
-**Basic usage (with GUI file picker):**
+**Using the installed command:**
+```bash
+facelandmarkview
+```
+
+**Or using Python module:**
+```bash
+python -m vptry_facelandmarkview.main
+```
+
+**Or using backward compatibility wrapper:**
 ```bash
 python facelandmarkview.py
 ```
 
 **Load a file directly from command line:**
 ```bash
-python facelandmarkview.py sample_landmarks.npy
+facelandmarkview sample_landmarks.npy
 ```
 
 **Load a file with a specific base frame:**
 ```bash
-python facelandmarkview.py sample_landmarks.npy --base-frame 10
+facelandmarkview sample_landmarks.npy --base-frame 10
 ```
 
 **View help and options:**
 ```bash
-python facelandmarkview.py --help
+facelandmarkview --help
 ```
 
 ### Data Format
@@ -90,9 +105,27 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 - **Green lines**: Vectors from base to current frame (when enabled)
 - **RGB axes**: Red (X), Green (Y), Blue (Z) coordinate axes
 
+## Project Structure
+
+The project follows a modular src-layout structure:
+
+```
+src/vptry_facelandmarkview/
+├── __init__.py          # Package initialization and exports
+├── constants.py         # Application constants
+├── utils.py             # Utility functions for landmark processing
+├── gl_widget.py         # OpenGL widget for 3D rendering
+├── viewer.py            # Main window and UI components
+└── main.py              # Application entry point
+```
+
+The old `facelandmarkview.py` is maintained as a backward compatibility wrapper that imports from the new package structure.
+
 ## Implementation Notes
 
 The application uses:
 - **Type annotations** throughout for better code clarity and IDE support
 - **pathlib.Path** for cross-platform file path handling
 - **OpenGL** for hardware-accelerated 3D rendering (instead of matplotlib)
+- **Modular architecture** with separate modules for better organization and maintainability
+- **Absolute imports** for clear dependency management
