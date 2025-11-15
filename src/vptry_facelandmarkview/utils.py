@@ -3,6 +3,7 @@ Utility functions for Face Landmark Viewer.
 """
 
 import logging
+from typing import Callable, Optional
 import numpy as np
 import numpy.typing as npt
 import OpenGL.GL as gl
@@ -108,7 +109,7 @@ def draw_landmarks(
     scale: float,
     color: tuple[float, float, float, float],
     label: str,
-    alignment_fn: callable = None,
+    alignment_fn: Optional[Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]]] = None,
 ) -> None:
     """Draw landmarks as points
 

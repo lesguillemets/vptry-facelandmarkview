@@ -3,6 +3,7 @@ OpenGL widget for rendering 3D face landmarks.
 """
 
 import logging
+from functools import partial
 from typing import Optional
 
 import numpy as np
@@ -157,7 +158,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         alignment_fn = None
         if self.align_faces and len(current_landmarks_valid) > 0:
             # Create a partial function that aligns to base landmarks
-            alignment_fn = lambda lm: align_landmarks_to_base(lm, base_landmarks_valid)
+            alignment_fn = partial(align_landmarks_to_base, base_landmarks=base_landmarks_valid)
 
         # Draw current frame landmarks (red)
         draw_landmarks(
