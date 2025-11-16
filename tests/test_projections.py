@@ -8,6 +8,7 @@ import numpy as np
 from PySide6.QtWidgets import QApplication
 from vptry_facelandmarkview import FaceLandmarkViewer
 from vptry_facelandmarkview.projection_widget import ProjectionWidget
+from vptry_facelandmarkview.constants import ProjectionType
 
 
 def test_projection_widgets_exist():
@@ -31,8 +32,8 @@ def test_projection_widgets_exist():
     print("  ✓ Widgets are ProjectionWidget instances")
 
     # Check projection types
-    assert viewer.xz_widget.projection_type == "xz", "xz_widget should have projection_type 'xz'"
-    assert viewer.yz_widget.projection_type == "yz", "yz_widget should have projection_type 'yz'"
+    assert viewer.xz_widget.projection_type == ProjectionType.XZ, "xz_widget should have projection_type XZ"
+    assert viewer.yz_widget.projection_type == ProjectionType.YZ, "yz_widget should have projection_type YZ"
     print("  ✓ Widgets have correct projection types")
 
     return True
@@ -120,14 +121,12 @@ def test_widget_dimensions():
     viewer = FaceLandmarkViewer()
 
     # Check X-Z widget height
-    xz_height = viewer.xz_widget.height()
     assert viewer.xz_widget.maximumHeight() == 100, "X-Z widget should have max height of 100px"
-    print(f"  ✓ X-Z widget has fixed height (max: 100px)")
+    print("  ✓ X-Z widget has fixed height (max: 100px)")
 
     # Check Y-Z widget width
-    yz_width = viewer.yz_widget.width()
     assert viewer.yz_widget.maximumWidth() == 100, "Y-Z widget should have max width of 100px"
-    print(f"  ✓ Y-Z widget has fixed width (max: 100px)")
+    print("  ✓ Y-Z widget has fixed width (max: 100px)")
 
     # Check placeholder dimensions
     assert viewer.top_right_placeholder.maximumHeight() == 100, "Placeholder should have max height of 100px"

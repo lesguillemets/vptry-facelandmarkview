@@ -14,6 +14,8 @@ import OpenGL.GL as gl
 
 from vptry_facelandmarkview.constants import (
     DEFAULT_ALIGNMENT_LANDMARKS,
+    ProjectionType,
+    PROJECTION_VIEWPORT_FILL,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -28,14 +30,14 @@ class ProjectionWidget(QOpenGLWidget):
 
     def __init__(
         self, 
-        projection_type: str = "xy",
+        projection_type: ProjectionType = ProjectionType.XY,
         parent: Optional[QWidget] = None
     ) -> None:
         """
         Initialize projection widget
         
         Args:
-            projection_type: Type of projection - "xy", "xz", or "yz"
+            projection_type: Type of projection (ProjectionType enum)
             parent: Parent widget
         """
         super().__init__(parent)
@@ -116,8 +118,8 @@ class ProjectionWidget(QOpenGLWidget):
         gl.glLoadIdentity()
         
         # Set up orthographic projection for 2D view
-        # Scale to use 80% of axis span (data spans roughly from -1 to 1 after scaling)
-        view_range = 1.0 / 0.8  # 1.25 to make data span 80% of view
+        # Scale to use configured percentage of axis span (data spans roughly from -1 to 1 after scaling)
+        view_range = 1.0 / PROJECTION_VIEWPORT_FILL
         aspect = w / h if h > 0 else 1.0
         if aspect > 1.0:
             # Width is larger
@@ -223,10 +225,10 @@ class ProjectionWidget(QOpenGLWidget):
             # Project to 2D based on projection type
             scaled_point = (point - self.center) * self.scale
             
-            if self.projection_type == "xz":
+            if self.projection_type == ProjectionType.XZ:
                 # X-Z projection (top view) - x horizontal, z vertical (negated)
                 x, z = scaled_point[0], -scaled_point[2]
-            elif self.projection_type == "yz":
+            elif self.projection_type == ProjectionType.YZ:
                 # Y-Z projection (side view) - z horizontal, y vertical (negated, top is -y)
                 x, z = scaled_point[2], -scaled_point[1]
             else:  # xy
@@ -252,11 +254,11 @@ class ProjectionWidget(QOpenGLWidget):
             scaled_base = (base_pt - self.center) * self.scale
             scaled_curr = (curr_pt - self.center) * self.scale
             
-            if self.projection_type == "xz":
+            if self.projection_type == ProjectionType.XZ:
                 # X-Z projection - x horizontal, z vertical (negated)
                 base_x, base_z = scaled_base[0], -scaled_base[2]
                 curr_x, curr_z = scaled_curr[0], -scaled_curr[2]
-            elif self.projection_type == "yz":
+            elif self.projection_type == ProjectionType.YZ:
                 # Y-Z projection - z horizontal, y vertical (negated, top is -y)
                 base_x, base_z = scaled_base[2], -scaled_base[1]
                 curr_x, curr_z = scaled_curr[2], -scaled_curr[1]

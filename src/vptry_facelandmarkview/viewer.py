@@ -25,6 +25,7 @@ from PySide6.QtCore import Qt
 
 from vptry_facelandmarkview.gl_widget import LandmarkGLWidget
 from vptry_facelandmarkview.projection_widget import ProjectionWidget
+from vptry_facelandmarkview.constants import ProjectionType, PROJECTION_SIZE_PX
 
 logger = logging.getLogger(__name__)
 
@@ -121,14 +122,14 @@ class FaceLandmarkViewer(QMainWindow):
         viz_grid = QGridLayout()
         
         # X-Z projection (top view) - row 0, column 0
-        self.xz_widget = ProjectionWidget(projection_type="xz")
-        self.xz_widget.setFixedHeight(100)  # Small height as specified
+        self.xz_widget = ProjectionWidget(projection_type=ProjectionType.XZ)
+        self.xz_widget.setFixedHeight(PROJECTION_SIZE_PX)
         viz_grid.addWidget(self.xz_widget, 0, 0)
         
         # Top-right corner - reserved for future use (row 0, column 1)
         self.top_right_placeholder = QLabel()
-        self.top_right_placeholder.setFixedHeight(100)
-        self.top_right_placeholder.setFixedWidth(100)
+        self.top_right_placeholder.setFixedHeight(PROJECTION_SIZE_PX)
+        self.top_right_placeholder.setFixedWidth(PROJECTION_SIZE_PX)
         viz_grid.addWidget(self.top_right_placeholder, 0, 1)
         
         # Main 3D OpenGL widget (row 1, column 0)
@@ -136,8 +137,8 @@ class FaceLandmarkViewer(QMainWindow):
         viz_grid.addWidget(self.gl_widget, 1, 0)
         
         # Y-Z projection (side view) - row 1, column 1
-        self.yz_widget = ProjectionWidget(projection_type="yz")
-        self.yz_widget.setFixedWidth(100)  # Small width as specified
+        self.yz_widget = ProjectionWidget(projection_type=ProjectionType.YZ)
+        self.yz_widget.setFixedWidth(PROJECTION_SIZE_PX)
         viz_grid.addWidget(self.yz_widget, 1, 1)
         
         # Set stretch factors so main plot takes up most space
