@@ -39,6 +39,7 @@ class FaceLandmarkViewer(QMainWindow):
         self.current_frame: int = 0
         self.show_vectors: bool = False
         self.align_faces: bool = False
+        self.use_static_points: bool = False
         self.initial_file: Optional[Path] = initial_file
 
         self.setWindowTitle("Face Landmark Viewer (OpenGL)")
@@ -82,6 +83,13 @@ class FaceLandmarkViewer(QMainWindow):
         self.align_faces_checkbox = QCheckBox("Align Faces")
         self.align_faces_checkbox.stateChanged.connect(self.on_align_faces_changed)
         control_layout.addWidget(self.align_faces_checkbox)
+
+        # Use static points checkbox (for alignment)
+        self.use_static_points_checkbox = QCheckBox("Limit to Static Points")
+        self.use_static_points_checkbox.stateChanged.connect(
+            self.on_use_static_points_changed
+        )
+        control_layout.addWidget(self.use_static_points_checkbox)
 
         control_layout.addStretch()
 
@@ -221,3 +229,13 @@ class FaceLandmarkViewer(QMainWindow):
         logger.debug(f"Align faces changed to: {self.align_faces} (state={state})")
         if self.data is not None:
             self.gl_widget.set_align_faces(self.align_faces)
+
+    def on_use_static_points_changed(self, state: int) -> None:
+        """Handle use static points checkbox change"""
+        # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
+        self.use_static_points = state == Qt.CheckState.Checked.value
+        logger.debug(
+            f"Use static points changed to: {self.use_static_points} (state={state})"
+        )
+        if self.data is not None:
+            self.gl_widget.set_use_static_points(self.use_static_points)

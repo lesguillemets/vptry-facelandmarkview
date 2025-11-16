@@ -14,7 +14,10 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 
-from vptry_facelandmarkview.constants import SCALE_MARGIN
+from vptry_facelandmarkview.constants import (
+    SCALE_MARGIN,
+    DEFAULT_ALIGNMENT_LANDMARKS,
+)
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
     calculate_center_and_scale,
@@ -35,6 +38,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         self.current_frame: int = 0
         self.show_vectors: bool = False
         self.align_faces: bool = False
+        self.use_static_points: bool = False
 
         # Camera controls
         self.rotation_x: float = 20.0
@@ -70,6 +74,12 @@ class LandmarkGLWidget(QOpenGLWidget):
         """Set whether to align faces to base frame"""
         logger.debug(f"Setting align_faces to: {align}")
         self.align_faces = align
+        self.update()
+
+    def set_use_static_points(self, use_static: bool) -> None:
+        """Set whether to use only static points for alignment"""
+        logger.debug(f"Setting use_static_points to: {use_static}")
+        self.use_static_points = use_static
         self.update()
 
     def initializeGL(self) -> None:
@@ -157,9 +167,20 @@ class LandmarkGLWidget(QOpenGLWidget):
         # Create alignment function if enabled
         alignment_fn = None
         if self.align_faces and len(current_landmarks_valid) > 0:
+            # Determine which landmarks to use for alignment
+            alignment_indices = None
+            if self.use_static_points:
+                # Use only nose + forehead landmarks for stable alignment
+                alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
+                logger.debug(
+                    f"Using {len(DEFAULT_ALIGNMENT_LANDMARKS)} static points for alignment"
+                )
+            
             # Create a partial function that aligns to base landmarks
             alignment_fn = partial(
-                align_landmarks_to_base, base_landmarks=base_landmarks_valid
+                align_landmarks_to_base,
+                base_landmarks=base_landmarks_valid,
+                alignment_indices=alignment_indices,
             )
 
         # Draw current frame landmarks (red)
@@ -181,8 +202,14 @@ class LandmarkGLWidget(QOpenGLWidget):
 
             # Apply alignment to current landmarks if enabled
             if self.align_faces and len(current_landmarks_both) > 0:
+                # Use same alignment indices for vectors
+                vector_alignment_indices = (
+                    DEFAULT_ALIGNMENT_LANDMARKS if self.use_static_points else None
+                )
                 current_landmarks_both = align_landmarks_to_base(
-                    current_landmarks_both, base_landmarks_both
+                    current_landmarks_both,
+                    base_landmarks_both,
+                    alignment_indices=vector_alignment_indices,
                 )
 
             if len(base_landmarks_both) > 0:
