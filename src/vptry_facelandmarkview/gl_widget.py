@@ -158,12 +158,18 @@ class LandmarkGLWidget(QOpenGLWidget):
         alignment_fn = None
         if self.align_faces and len(current_landmarks_valid) > 0:
             # Create a partial function that aligns to base landmarks
-            alignment_fn = partial(align_landmarks_to_base, base_landmarks=base_landmarks_valid)
+            alignment_fn = partial(
+                align_landmarks_to_base, base_landmarks=base_landmarks_valid
+            )
 
         # Draw current frame landmarks (red)
         draw_landmarks(
-            current_landmarks_valid, center, scale, (1.0, 0.0, 0.0, 0.8), "current",
-            alignment_fn=alignment_fn
+            current_landmarks_valid,
+            center,
+            scale,
+            (1.0, 0.0, 0.0, 0.8),
+            "current",
+            alignment_fn=alignment_fn,
         )
 
         # Draw vectors if enabled (only for landmarks that are valid in both frames)
