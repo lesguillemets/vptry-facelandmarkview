@@ -94,6 +94,7 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 - **Base Frame**: Select which frame to use as the base reference (blue points)
 - **Show Vectors**: Toggle visualization of vectors from base frame to current frame
 - **Align Faces**: Align current frame to base frame to remove head movement (translation and rotation), making facial expression changes easier to see
+- **Limit to Static Points**: When enabled with "Align Faces", uses only stable facial landmarks (nose and forehead, 30 points total) for computing alignment. This provides more robust alignment when expressions vary significantly, as it focuses on features that don't move with expressions.
 - **Frame Slider**: Navigate through frames to see animation
 
 ### Mouse Controls
@@ -117,18 +118,37 @@ The "Align Faces" feature removes the effects of head movement (translation and 
 - Facial expression changes (relative movements of landmarks) are preserved
 - Useful for analyzing subtle facial expressions without distraction from head movement
 
+#### Static Points for Robust Alignment
+
+The application includes preset landmark indices for stable facial features:
+- **Nose landmarks** (24 points): Nose bridge, sides, and tip region
+- **Forehead landmarks** (6 points): Upper forehead area
+- **Combined default** (30 points): Nose + forehead for optimal stability
+
+Enable "Limit to Static Points" in the UI to use these stable landmarks for alignment computation. This is particularly effective when:
+- Facial expressions vary significantly (e.g., speaking, smiling)
+- You want to focus on expression changes in the mouth or eye areas
+- The full face alignment is affected by expression-related movements
+
 #### Programmatic Usage with Specific Landmarks
 
 The alignment function can be used programmatically with optional landmark selection:
 
 ```python
 from vptry_facelandmarkview.utils import align_landmarks_to_base
+from vptry_facelandmarkview.constants import DEFAULT_ALIGNMENT_LANDMARKS
 
 # Align using all landmarks
 aligned = align_landmarks_to_base(current_landmarks, base_landmarks)
 
-# Align using only specific landmarks (e.g., indices 0, 1, 2, 5, 10)
-# The transformation is computed from these points, then applied to all landmarks
+# Align using preset static points (nose + forehead)
+aligned = align_landmarks_to_base(
+    current_landmarks, 
+    base_landmarks, 
+    alignment_indices=DEFAULT_ALIGNMENT_LANDMARKS
+)
+
+# Align using custom landmark indices
 alignment_indices = [0, 1, 2, 5, 10]  # or a set: {0, 1, 2, 5, 10}
 aligned = align_landmarks_to_base(
     current_landmarks, 
@@ -137,7 +157,7 @@ aligned = align_landmarks_to_base(
 )
 ```
 
-This is useful when you want to align based on stable facial features (e.g., nose bridge, eye corners) while preserving movements in other areas (e.g., mouth, eyebrows).
+This is useful when you want to align based on stable facial features while preserving movements in expression-active areas.
 
 ## Project Structure
 
