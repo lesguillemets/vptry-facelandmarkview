@@ -168,6 +168,61 @@ def test_alignment_with_sample_data():
         print("  ⚠ Sample data not found, skipping this test")
 
 
+def test_alignment_with_indices():
+    """Test alignment using specific landmark indices"""
+    print("\nTest: Alignment with specific landmark indices")
+    
+    # Create base landmarks (5 points)
+    base = np.array([
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+    ])
+    
+    # Create translated and rotated landmarks
+    angle = np.pi / 6  # 30 degrees
+    cos_a = np.cos(angle)
+    sin_a = np.sin(angle)
+    rotation = np.array([
+        [cos_a, -sin_a, 0],
+        [sin_a, cos_a, 0],
+        [0, 0, 1]
+    ])
+    translation = np.array([5.0, 3.0, -2.0])
+    current = (rotation @ base.T).T + translation
+    
+    # Align using only first 3 points (indices 0, 1, 2)
+    alignment_indices = [0, 1, 2]
+    aligned = align_landmarks_to_base(current, base, alignment_indices=alignment_indices)
+    
+    print(f"  Using indices {alignment_indices} for alignment")
+    print(f"  Aligned shape: {aligned.shape}")
+    assert aligned.shape == current.shape
+    
+    # Check that the alignment was computed using only specified points
+    # The first 3 points should be very close to base
+    for i in alignment_indices:
+        diff = np.linalg.norm(aligned[i] - base[i])
+        print(f"  Point {i} difference: {diff:.6f}")
+        assert diff < 0.01, f"Point {i} should be well-aligned"
+    
+    print("  ✓ Alignment with indices works correctly")
+    
+    # Test with set instead of list
+    alignment_indices_set = {1, 2, 3}
+    aligned_set = align_landmarks_to_base(current, base, alignment_indices=alignment_indices_set)
+    assert aligned_set.shape == current.shape
+    print("  ✓ Alignment with set of indices works correctly")
+    
+    # Test with invalid indices (should use all landmarks)
+    invalid_indices = [0, 1, 100]  # 100 is out of range
+    aligned_invalid = align_landmarks_to_base(current, base, alignment_indices=invalid_indices)
+    assert aligned_invalid.shape == current.shape
+    print("  ✓ Invalid indices handled gracefully")
+
+
 def main():
     """Run all alignment tests"""
     print("=" * 60)
@@ -182,6 +237,7 @@ def main():
         test_alignment_combined()
         test_alignment_empty()
         test_alignment_with_sample_data()
+        test_alignment_with_indices()
 
         print()
         print("=" * 60)

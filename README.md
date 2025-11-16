@@ -117,6 +117,28 @@ The "Align Faces" feature removes the effects of head movement (translation and 
 - Facial expression changes (relative movements of landmarks) are preserved
 - Useful for analyzing subtle facial expressions without distraction from head movement
 
+#### Programmatic Usage with Specific Landmarks
+
+The alignment function can be used programmatically with optional landmark selection:
+
+```python
+from vptry_facelandmarkview.utils import align_landmarks_to_base
+
+# Align using all landmarks
+aligned = align_landmarks_to_base(current_landmarks, base_landmarks)
+
+# Align using only specific landmarks (e.g., indices 0, 1, 2, 5, 10)
+# The transformation is computed from these points, then applied to all landmarks
+alignment_indices = [0, 1, 2, 5, 10]  # or a set: {0, 1, 2, 5, 10}
+aligned = align_landmarks_to_base(
+    current_landmarks, 
+    base_landmarks, 
+    alignment_indices=alignment_indices
+)
+```
+
+This is useful when you want to align based on stable facial features (e.g., nose bridge, eye corners) while preserving movements in other areas (e.g., mouth, eyebrows).
+
 ## Project Structure
 
 The project follows a modular src-layout structure:
