@@ -16,25 +16,25 @@ NOSE_LANDMARKS = [
     3,
     51,
     45,
-    44,  # Upper nose bridge
+    44,
     417,
     351,
     419,
     248,
     281,
     275,
-    274,  # Nose sides
+    274,
     412,
     399,
     456,
     363,
-    440,  # Nose tip region
+    440,
     128,
     114,
     217,
     198,
     131,
-    115,  # Lower nose
+    115,
 ]
 
 # Forehead landmarks (very stable, minimal expression movement)
