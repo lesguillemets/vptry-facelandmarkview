@@ -9,11 +9,18 @@ from the new src/vptry_facelandmarkview package structure.
 from typing import TYPE_CHECKING
 
 # Import non-Qt dependencies eagerly
-from vptry_facelandmarkview.constants import POINT_SIZE, SCALE_MARGIN
+from vptry_facelandmarkview.constants import (
+    POINT_SIZE,
+    SCALE_MARGIN,
+    NOSE_LANDMARKS,
+    FOREHEAD_LANDMARKS,
+    DEFAULT_ALIGNMENT_LANDMARKS,
+)
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
     calculate_center_and_scale,
     draw_landmarks,
+    align_landmarks_to_base,
 )
 
 # Type checking imports (not executed at runtime)
@@ -26,9 +33,13 @@ __all__ = [
     "main",
     "POINT_SIZE",
     "SCALE_MARGIN",
+    "NOSE_LANDMARKS",
+    "FOREHEAD_LANDMARKS",
+    "DEFAULT_ALIGNMENT_LANDMARKS",
     "filter_nan_landmarks",
     "calculate_center_and_scale",
     "draw_landmarks",
+    "align_landmarks_to_base",
 ]
 
 

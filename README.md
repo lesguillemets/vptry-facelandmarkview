@@ -8,6 +8,7 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 - Interactive frame navigation using a slider
 - Display both current frame and base frame landmarks
 - Optional vector visualization showing movement from base frame to current frame
+- **Face alignment** to remove head movement effects and highlight facial expressions
 - Hardware-accelerated 3D rendering using OpenGL
 - Interactive mouse controls for rotation (drag) and zoom (wheel)
 
@@ -92,6 +93,8 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 - **Load .npy File**: Open a file dialog to load landmark data
 - **Base Frame**: Select which frame to use as the base reference (blue points)
 - **Show Vectors**: Toggle visualization of vectors from base frame to current frame
+- **Align Faces**: Align current frame to base frame to remove head movement (translation and rotation), making facial expression changes easier to see
+- **Limit to Static Points**: When enabled with "Align Faces", uses only stable facial landmarks (nose and forehead, 30 points total) for computing alignment. This provides more robust alignment when expressions vary significantly, as it focuses on features that don't move with expressions.
 - **Frame Slider**: Navigate through frames to see animation
 
 ### Mouse Controls
@@ -104,6 +107,57 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 - **Red points**: Current frame landmarks (larger)
 - **Green lines**: Vectors from base to current frame (when enabled)
 - **RGB axes**: Red (X), Green (Y), Blue (Z) coordinate axes
+
+### Face Alignment
+
+The "Align Faces" feature removes the effects of head movement (translation and rotation) to make facial expression changes more visible. When enabled:
+
+- The current frame landmarks are aligned to the base frame using Procrustes alignment (Kabsch algorithm)
+- This computes the optimal rigid transformation (rotation + translation) that best matches the two point sets
+- Head position and orientation differences are removed
+- Facial expression changes (relative movements of landmarks) are preserved
+- Useful for analyzing subtle facial expressions without distraction from head movement
+
+#### Static Points for Robust Alignment
+
+The application includes preset landmark indices for stable facial features:
+- **Nose landmarks** (24 points): Nose bridge, sides, and tip region
+- **Forehead landmarks** (6 points): Upper forehead area
+- **Combined default** (30 points): Nose + forehead for optimal stability
+
+Enable "Limit to Static Points" in the UI to use these stable landmarks for alignment computation. This is particularly effective when:
+- Facial expressions vary significantly (e.g., speaking, smiling)
+- You want to focus on expression changes in the mouth or eye areas
+- The full face alignment is affected by expression-related movements
+
+#### Programmatic Usage with Specific Landmarks
+
+The alignment function can be used programmatically with optional landmark selection:
+
+```python
+from vptry_facelandmarkview.utils import align_landmarks_to_base
+from vptry_facelandmarkview.constants import DEFAULT_ALIGNMENT_LANDMARKS
+
+# Align using all landmarks
+aligned = align_landmarks_to_base(current_landmarks, base_landmarks)
+
+# Align using preset static points (nose + forehead)
+aligned = align_landmarks_to_base(
+    current_landmarks, 
+    base_landmarks, 
+    alignment_indices=DEFAULT_ALIGNMENT_LANDMARKS
+)
+
+# Align using custom landmark indices
+alignment_indices = [0, 1, 2, 5, 10]  # or a set: {0, 1, 2, 5, 10}
+aligned = align_landmarks_to_base(
+    current_landmarks, 
+    base_landmarks, 
+    alignment_indices=alignment_indices
+)
+```
+
+This is useful when you want to align based on stable facial features while preserving movements in expression-active areas.
 
 ## Project Structure
 

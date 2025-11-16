@@ -57,7 +57,7 @@ def test_app_instantiation():
         assert viewer.data is None, "Initial data should be None"
         assert viewer.base_frame == 0, "Initial base frame should be 0"
         assert viewer.current_frame == 0, "Initial current frame should be 0"
-        assert viewer.show_vectors == False, "Initial show_vectors should be False"
+        assert not viewer.show_vectors, "Initial show_vectors should be False"
         print("✓ Initial state is correct")
 
         return True
@@ -83,7 +83,7 @@ def main():
 
     print("Test 2: Sample data loading")
     try:
-        data = test_data_loading()
+        test_data_loading()
     except Exception as e:
         print(f"✗ Failed: {e}")
         return 1
