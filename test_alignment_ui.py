@@ -41,9 +41,7 @@ def test_alignment_ui():
     assert hasattr(viewer.gl_widget, "align_faces"), (
         "GL widget should have align_faces attribute"
     )
-    assert not viewer.gl_widget.align_faces, (
-        "Alignment should be disabled by default"
-    )
+    assert not viewer.gl_widget.align_faces, "Alignment should be disabled by default"
     print("  ✓ GL widget has align_faces attribute (default: False)")
 
     # Test enabling alignment via UI
@@ -61,9 +59,7 @@ def test_alignment_ui():
     viewer.on_align_faces_changed(Qt.CheckState.Unchecked.value)
 
     assert not viewer.align_faces, "Viewer align_faces should be False"
-    assert not viewer.gl_widget.align_faces, (
-        "GL widget align_faces should be False"
-    )
+    assert not viewer.gl_widget.align_faces, "GL widget align_faces should be False"
     print("  ✓ Alignment disabled via UI")
 
     print()

@@ -175,7 +175,7 @@ class LandmarkGLWidget(QOpenGLWidget):
                 logger.debug(
                     f"Using {len(DEFAULT_ALIGNMENT_LANDMARKS)} static points for alignment"
                 )
-            
+
             # Create a partial function that aligns to base landmarks
             alignment_fn = partial(
                 align_landmarks_to_base,

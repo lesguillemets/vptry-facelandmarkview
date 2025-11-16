@@ -94,9 +94,7 @@ def test_vector_display(viewer):
     viewer.show_vectors_checkbox.setChecked(True)
     viewer.on_show_vectors_changed(Qt.CheckState.Checked.value)
     assert viewer.show_vectors, "Vectors should be enabled"
-    assert viewer.gl_widget.show_vectors, (
-        "OpenGL widget vectors should be enabled"
-    )
+    assert viewer.gl_widget.show_vectors, "OpenGL widget vectors should be enabled"
     print("  ✓ Vectors enabled")
 
     print("  ✓ OpenGL widget updated with vectors")
@@ -105,9 +103,7 @@ def test_vector_display(viewer):
     viewer.show_vectors_checkbox.setChecked(False)
     viewer.on_show_vectors_changed(Qt.CheckState.Unchecked.value)
     assert not viewer.show_vectors, "Vectors should be disabled"
-    assert not viewer.gl_widget.show_vectors, (
-        "OpenGL widget vectors should be disabled"
-    )
+    assert not viewer.gl_widget.show_vectors, "OpenGL widget vectors should be disabled"
     print("  ✓ Vectors disabled")
 
     print("  ✓ OpenGL widget updated without vectors")

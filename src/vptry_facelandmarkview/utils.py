@@ -83,13 +83,17 @@ def align_landmarks_to_base(
     # If alignment_indices is provided, use only those landmarks for computing alignment
     if alignment_indices is not None:
         # Convert to list if it's a set for indexing
-        indices_list = list(alignment_indices) if isinstance(alignment_indices, set) else alignment_indices
-        
+        indices_list = (
+            list(alignment_indices)
+            if isinstance(alignment_indices, set)
+            else alignment_indices
+        )
+
         # Validate indices
         max_idx = len(landmarks)
         if any(idx < 0 or idx >= max_idx for idx in indices_list):
             logger.warning(
-                f"Invalid alignment indices provided (range: 0-{max_idx-1}). "
+                f"Invalid alignment indices provided (range: 0-{max_idx - 1}). "
                 "Using all landmarks for alignment."
             )
             landmarks_for_alignment = landmarks
@@ -98,7 +102,9 @@ def align_landmarks_to_base(
             # Use only specified landmarks for alignment calculation
             landmarks_for_alignment = landmarks[indices_list]
             base_for_alignment = base_landmarks[indices_list]
-            logger.debug(f"Using {len(indices_list)} landmarks for alignment calculation")
+            logger.debug(
+                f"Using {len(indices_list)} landmarks for alignment calculation"
+            )
     else:
         # Use all landmarks for alignment
         landmarks_for_alignment = landmarks
