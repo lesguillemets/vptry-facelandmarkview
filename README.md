@@ -82,7 +82,7 @@ For each frame `fr` and landmark `p`:
 To generate sample data for testing:
 
 ```bash
-python generate_sample_data.py
+python tests/generate_sample_data.py
 ```
 
 This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
