@@ -11,15 +11,12 @@ import numpy.typing as npt
 from PySide6.QtWidgets import QWidget
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 import OpenGL.GL as gl
-import OpenGL.GLU as glu
 
 from vptry_facelandmarkview.constants import (
-    SCALE_MARGIN,
     DEFAULT_ALIGNMENT_LANDMARKS,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
-    calculate_center_and_scale,
     align_landmarks_to_base,
 )
 

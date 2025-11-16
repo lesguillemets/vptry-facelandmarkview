@@ -168,6 +168,10 @@ class FaceLandmarkViewer(QMainWindow):
 
     def load_file_from_path(self, file_path: Path) -> None:
         """Load a .npy file from a given path"""
+        # Ensure file_path is a Path object
+        if isinstance(file_path, str):
+            file_path = Path(file_path)
+        
         logger.info(f"Loading file: {file_path}")
         try:
             self.data = np.load(file_path)
