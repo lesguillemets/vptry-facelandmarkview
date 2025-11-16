@@ -4,6 +4,10 @@ Simple test to verify imports work correctly after refactoring
 """
 
 import sys
+from pathlib import Path
+
+# Add parent directory to path so we can import facelandmarkview.py wrapper
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def test_package_imports():
