@@ -34,8 +34,7 @@ def test_alignment_with_draw_landmarks():
     print("  ✓ Alignment function created with partial works correctly")
 
     # Test that draw_landmarks accepts alignment_fn (won't actually draw, but should not crash)
-    center = base.mean(axis=0)
-    scale = 1.0
+    base.mean(axis=0)
 
     try:
         # This will fail because OpenGL is not initialized, but we can catch that
