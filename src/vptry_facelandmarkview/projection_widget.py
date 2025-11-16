@@ -116,13 +116,15 @@ class ProjectionWidget(QOpenGLWidget):
         gl.glLoadIdentity()
         
         # Set up orthographic projection for 2D view
+        # Scale to use 80% of axis span (data spans roughly from -1 to 1 after scaling)
+        view_range = 1.0 / 0.8  # 1.25 to make data span 80% of view
         aspect = w / h if h > 0 else 1.0
         if aspect > 1.0:
             # Width is larger
-            gl.glOrtho(-aspect, aspect, -1.0, 1.0, -1.0, 1.0)
+            gl.glOrtho(-aspect * view_range, aspect * view_range, -view_range, view_range, -1.0, 1.0)
         else:
             # Height is larger
-            gl.glOrtho(-1.0, 1.0, -1.0 / aspect, 1.0 / aspect, -1.0, 1.0)
+            gl.glOrtho(-view_range, view_range, -view_range / aspect, view_range / aspect, -1.0, 1.0)
         
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
@@ -222,11 +224,11 @@ class ProjectionWidget(QOpenGLWidget):
             scaled_point = (point - self.center) * self.scale
             
             if self.projection_type == "xz":
-                # X-Z projection (top view) - flip Y for consistency
+                # X-Z projection (top view) - x horizontal, z vertical (negated)
                 x, z = scaled_point[0], -scaled_point[2]
             elif self.projection_type == "yz":
-                # Y-Z projection (side view) - flip both for consistency
-                x, z = -scaled_point[1], -scaled_point[2]
+                # Y-Z projection (side view) - z horizontal, y vertical (negated, top is -y)
+                x, z = scaled_point[2], -scaled_point[1]
             else:  # xy
                 # X-Y projection (not used currently)
                 x, z = scaled_point[0], -scaled_point[1]
@@ -251,13 +253,13 @@ class ProjectionWidget(QOpenGLWidget):
             scaled_curr = (curr_pt - self.center) * self.scale
             
             if self.projection_type == "xz":
-                # X-Z projection - flip Y
+                # X-Z projection - x horizontal, z vertical (negated)
                 base_x, base_z = scaled_base[0], -scaled_base[2]
                 curr_x, curr_z = scaled_curr[0], -scaled_curr[2]
             elif self.projection_type == "yz":
-                # Y-Z projection - flip both
-                base_x, base_z = -scaled_base[1], -scaled_base[2]
-                curr_x, curr_z = -scaled_curr[1], -scaled_curr[2]
+                # Y-Z projection - z horizontal, y vertical (negated, top is -y)
+                base_x, base_z = scaled_base[2], -scaled_base[1]
+                curr_x, curr_z = scaled_curr[2], -scaled_curr[1]
             else:  # xy
                 base_x, base_z = scaled_base[0], -scaled_base[1]
                 curr_x, curr_z = scaled_curr[0], -scaled_curr[1]
