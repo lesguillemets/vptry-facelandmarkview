@@ -9,6 +9,25 @@ from typing import NamedTuple
 POINT_SIZE = 2.0
 SCALE_MARGIN = 1.2  # 20% margin for scaling
 
+# Camera and view constants
+DEFAULT_ROTATION_X = 20.0
+DEFAULT_ROTATION_Y = 45.0
+DEFAULT_ZOOM = 3.0
+MIN_ZOOM = 1.0
+MAX_ZOOM = 20.0
+ZOOM_IN_FACTOR = 0.9
+ZOOM_OUT_FACTOR = 1.1
+ROTATION_SENSITIVITY = 0.5
+
+# OpenGL rendering constants
+AXIS_LENGTH = 1.5
+VECTOR_LINE_WIDTH = 1.0
+AXIS_LINE_WIDTH = 2.0
+BACKGROUND_COLOR = (1.0, 1.0, 1.0, 1.0)  # White
+PERSPECTIVE_FOV = 45.0
+PERSPECTIVE_NEAR = 0.1
+PERSPECTIVE_FAR = 100.0
+
 # Projection widget constants
 PROJECTION_SIZE_PX = (
     100  # Fixed size for projection plots (width for y-z, height for x-z)

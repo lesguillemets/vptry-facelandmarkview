@@ -27,6 +27,18 @@ from vptry_facelandmarkview.gl_widget import LandmarkGLWidget
 from vptry_facelandmarkview.projection_widget import ProjectionWidget
 from vptry_facelandmarkview.constants import ProjectionType, PROJECTION_SIZE_PX
 
+# UI text constants
+WINDOW_TITLE = "Face Landmark Viewer (OpenGL)"
+LOAD_BUTTON_TEXT = "Load .npy File"
+BASE_FRAME_LABEL = "Base Frame:"
+FRAME_LABEL = "Frame:"
+SHOW_VECTORS_TEXT = "Show Vectors"
+ALIGN_FACES_TEXT = "Align Faces"
+LIMIT_STATIC_POINTS_TEXT = "Limit to Static Points"
+INITIAL_INFO_TEXT = "Load a .npy file to begin. Use mouse to rotate (drag) and zoom (wheel)."
+FILE_DIALOG_TITLE = "Open .npy File"
+FILE_DIALOG_FILTER = "NumPy Files (*.npy);;All Files (*)"
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,7 +57,7 @@ class FaceLandmarkViewer(QMainWindow):
         self.use_static_points: bool = False
         self.initial_file: Optional[Path] = initial_file
 
-        self.setWindowTitle("Face Landmark Viewer (OpenGL)")
+        self.setWindowTitle(WINDOW_TITLE)
         self.setGeometry(100, 100, 1200, 800)
 
         self.init_ui()
@@ -65,12 +77,12 @@ class FaceLandmarkViewer(QMainWindow):
         control_layout = QHBoxLayout()
 
         # Load button
-        self.load_button = QPushButton("Load .npy File")
+        self.load_button = QPushButton(LOAD_BUTTON_TEXT)
         self.load_button.clicked.connect(self.load_file)
         control_layout.addWidget(self.load_button)
 
         # Base frame selector
-        control_layout.addWidget(QLabel("Base Frame:"))
+        control_layout.addWidget(QLabel(BASE_FRAME_LABEL))
         self.base_frame_spinbox = QSpinBox()
         self.base_frame_spinbox.setMinimum(0)
         self.base_frame_spinbox.setValue(0)
@@ -78,17 +90,17 @@ class FaceLandmarkViewer(QMainWindow):
         control_layout.addWidget(self.base_frame_spinbox)
 
         # Show vectors checkbox
-        self.show_vectors_checkbox = QCheckBox("Show Vectors")
+        self.show_vectors_checkbox = QCheckBox(SHOW_VECTORS_TEXT)
         self.show_vectors_checkbox.stateChanged.connect(self.on_show_vectors_changed)
         control_layout.addWidget(self.show_vectors_checkbox)
 
         # Align faces checkbox
-        self.align_faces_checkbox = QCheckBox("Align Faces")
+        self.align_faces_checkbox = QCheckBox(ALIGN_FACES_TEXT)
         self.align_faces_checkbox.stateChanged.connect(self.on_align_faces_changed)
         control_layout.addWidget(self.align_faces_checkbox)
 
         # Use static points checkbox (for alignment)
-        self.use_static_points_checkbox = QCheckBox("Limit to Static Points")
+        self.use_static_points_checkbox = QCheckBox(LIMIT_STATIC_POINTS_TEXT)
         self.use_static_points_checkbox.stateChanged.connect(
             self.on_use_static_points_changed
         )
@@ -100,7 +112,7 @@ class FaceLandmarkViewer(QMainWindow):
 
         # Frame slider
         slider_layout = QHBoxLayout()
-        slider_layout.addWidget(QLabel("Frame:"))
+        slider_layout.addWidget(QLabel(FRAME_LABEL))
 
         self.frame_slider = QSlider(Qt.Horizontal)
         self.frame_slider.setMinimum(0)
@@ -152,9 +164,7 @@ class FaceLandmarkViewer(QMainWindow):
         main_layout.addLayout(viz_grid, stretch=1)
 
         # Info label
-        self.info_label = QLabel(
-            "Load a .npy file to begin. Use mouse to rotate (drag) and zoom (wheel)."
-        )
+        self.info_label = QLabel(INITIAL_INFO_TEXT)
         main_layout.addWidget(self.info_label, stretch=0)
 
     def _update_all_widgets(self, method_name: str, *args) -> None:
@@ -188,7 +198,7 @@ class FaceLandmarkViewer(QMainWindow):
     def load_file(self) -> None:
         """Load a .npy file via file dialog"""
         file_path_str, _ = QFileDialog.getOpenFileName(
-            self, "Open .npy File", "", "NumPy Files (*.npy);;All Files (*)"
+            self, FILE_DIALOG_TITLE, "", FILE_DIALOG_FILTER
         )
 
         if not file_path_str:

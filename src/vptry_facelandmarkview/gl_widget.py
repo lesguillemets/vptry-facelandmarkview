@@ -24,6 +24,21 @@ from vptry_facelandmarkview.constants import (
     AXIS_Y_COLOR,
     AXIS_Z_COLOR,
     DisplayState,
+    DEFAULT_ROTATION_X,
+    DEFAULT_ROTATION_Y,
+    DEFAULT_ZOOM,
+    MIN_ZOOM,
+    MAX_ZOOM,
+    ZOOM_IN_FACTOR,
+    ZOOM_OUT_FACTOR,
+    ROTATION_SENSITIVITY,
+    AXIS_LENGTH,
+    VECTOR_LINE_WIDTH,
+    AXIS_LINE_WIDTH,
+    BACKGROUND_COLOR,
+    PERSPECTIVE_FOV,
+    PERSPECTIVE_NEAR,
+    PERSPECTIVE_FAR,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -44,9 +59,9 @@ class LandmarkGLWidget(QOpenGLWidget):
         self.state = DisplayState()
 
         # Camera controls
-        self.rotation_x: float = 20.0
-        self.rotation_y: float = 45.0
-        self.zoom: float = 3.0
+        self.rotation_x: float = DEFAULT_ROTATION_X
+        self.rotation_y: float = DEFAULT_ROTATION_Y
+        self.zoom: float = DEFAULT_ZOOM
         self.last_pos: Optional[QPoint] = None
 
     def set_data(self, data: npt.NDArray[np.float64]) -> None:
@@ -95,7 +110,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         gl.glEnable(gl.GL_LINE_SMOOTH)
         gl.glHint(gl.GL_POINT_SMOOTH_HINT, gl.GL_NICEST)
         gl.glHint(gl.GL_LINE_SMOOTH_HINT, gl.GL_NICEST)
-        gl.glClearColor(1.0, 1.0, 1.0, 1.0)
+        gl.glClearColor(*BACKGROUND_COLOR)
 
     def resizeGL(self, w: int, h: int) -> None:
         """Handle window resize"""
@@ -105,7 +120,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         gl.glLoadIdentity()
         aspect = w / h if h > 0 else 1.0
         logger.debug(f"Aspect ratio: {aspect}")
-        glu.gluPerspective(45.0, aspect, 0.1, 100.0)
+        glu.gluPerspective(PERSPECTIVE_FOV, aspect, PERSPECTIVE_NEAR, PERSPECTIVE_FAR)
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
     def paintGL(self) -> None:
@@ -219,7 +234,7 @@ class LandmarkGLWidget(QOpenGLWidget):
 
             if len(base_landmarks_both) > 0:
                 logger.debug(f"Drawing {len(base_landmarks_both)} vectors (green)")
-                gl.glLineWidth(1.0)
+                gl.glLineWidth(VECTOR_LINE_WIDTH)
                 gl.glColor4f(*VECTOR_COLOR)
                 gl.glBegin(gl.GL_LINES)
                 for base_pt, curr_pt in zip(
@@ -239,24 +254,23 @@ class LandmarkGLWidget(QOpenGLWidget):
 
     def _draw_axes(self) -> None:
         """Draw coordinate axes"""
-        gl.glLineWidth(2.0)
-        axis_length = 1.5
+        gl.glLineWidth(AXIS_LINE_WIDTH)
 
         gl.glBegin(gl.GL_LINES)
         # X axis (red)
         gl.glColor3f(*AXIS_X_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
-        gl.glVertex3f(axis_length, 0.0, 0.0)
+        gl.glVertex3f(AXIS_LENGTH, 0.0, 0.0)
 
         # Y axis (green)
         gl.glColor3f(*AXIS_Y_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
-        gl.glVertex3f(0.0, axis_length, 0.0)
+        gl.glVertex3f(0.0, AXIS_LENGTH, 0.0)
 
         # Z axis (blue)
         gl.glColor3f(*AXIS_Z_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
-        gl.glVertex3f(0.0, 0.0, axis_length)
+        gl.glVertex3f(0.0, 0.0, AXIS_LENGTH)
         gl.glEnd()
 
     def mousePressEvent(self, event) -> None:
@@ -270,8 +284,8 @@ class LandmarkGLWidget(QOpenGLWidget):
             dy = event.pos().y() - self.last_pos.y()
 
             if event.buttons() & Qt.LeftButton:
-                self.rotation_x += dy * 0.5
-                self.rotation_y += dx * 0.5
+                self.rotation_x += dy * ROTATION_SENSITIVITY
+                self.rotation_y += dx * ROTATION_SENSITIVITY
                 self.update()
 
             self.last_pos = event.pos()
@@ -280,8 +294,8 @@ class LandmarkGLWidget(QOpenGLWidget):
         """Handle mouse wheel for zoom"""
         delta = event.angleDelta().y()
         if delta > 0:
-            self.zoom *= 0.9
+            self.zoom *= ZOOM_IN_FACTOR
         else:
-            self.zoom *= 1.1
-        self.zoom = max(1.0, min(20.0, self.zoom))
+            self.zoom *= ZOOM_OUT_FACTOR
+        self.zoom = max(MIN_ZOOM, min(MAX_ZOOM, self.zoom))
         self.update()
