@@ -61,7 +61,7 @@ def demo_alignment_methods():
     print("-" * 70)
 
     original_distances = np.linalg.norm(current - base, axis=1)
-    print(f"Original distances from base (per landmark):")
+    print("Original distances from base (per landmark):")
     print(f"  Mean: {original_distances.mean():.6f}")
     print(f"  Min:  {original_distances.min():.6f}")
     print(f"  Max:  {original_distances.max():.6f}")
@@ -78,7 +78,7 @@ def demo_alignment_methods():
         # Calculate alignment quality metrics
         aligned_distances = np.linalg.norm(aligned - base, axis=1)
 
-        print(f"  Aligned distances from base (per landmark):")
+        print("  Aligned distances from base (per landmark):")
         print(f"    Mean: {aligned_distances.mean():.6f}")
         print(f"    Min:  {aligned_distances.min():.6f}")
         print(f"    Max:  {aligned_distances.max():.6f}")

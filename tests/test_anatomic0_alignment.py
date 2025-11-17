@@ -51,7 +51,9 @@ def test_anatomic0_with_mediapipe_landmarks():
     print(f"  Improvement: {(1 - aligned_distance / original_distance) * 100:.2f}%")
 
     # Alignment should significantly reduce distance
-    assert aligned_distance < original_distance * 0.1, "Alignment should greatly reduce distance"
+    assert aligned_distance < original_distance * 0.1, (
+        "Alignment should greatly reduce distance"
+    )
 
     print("  ✓ Anatomic0 alignment significantly improved alignment")
 
@@ -100,7 +102,9 @@ def test_anatomic0_uses_correct_landmarks():
         midpoint_base = (base[idx1] + base[idx2]) / 2.0
         midpoint_distance = np.linalg.norm(midpoint_aligned - midpoint_base)
         print(f"  Midpoint ({idx1}, {idx2}) distance: {midpoint_distance:.6f}")
-        assert midpoint_distance < 0.1, f"Midpoint ({idx1}, {idx2}) should be well-aligned"
+        assert midpoint_distance < 0.1, (
+            f"Midpoint ({idx1}, {idx2}) should be well-aligned"
+        )
 
     print("  ✓ Midpoint landmarks are well-aligned")
 
@@ -120,14 +124,20 @@ def test_anatomic0_landmark_constants():
     print("  ✓ All nose landmarks are valid MediaPipe indices")
 
     # Check that ANATOMIC0_MIDPOINT_PAIRS is defined
-    assert len(ANATOMIC0_MIDPOINT_PAIRS) > 0, "ANATOMIC0_MIDPOINT_PAIRS should not be empty"
-    print(f"  ✓ ANATOMIC0_MIDPOINT_PAIRS defined with {len(ANATOMIC0_MIDPOINT_PAIRS)} pairs")
+    assert len(ANATOMIC0_MIDPOINT_PAIRS) > 0, (
+        "ANATOMIC0_MIDPOINT_PAIRS should not be empty"
+    )
+    print(
+        f"  ✓ ANATOMIC0_MIDPOINT_PAIRS defined with {len(ANATOMIC0_MIDPOINT_PAIRS)} pairs"
+    )
 
     # Check that all midpoint pairs contain valid indices
     for idx1, idx2 in ANATOMIC0_MIDPOINT_PAIRS:
         assert 0 <= idx1 < 478, f"Midpoint index {idx1} should be valid (0-477)"
         assert 0 <= idx2 < 478, f"Midpoint index {idx2} should be valid (0-477)"
-        assert idx1 != idx2, f"Midpoint pair ({idx1}, {idx2}) should have different indices"
+        assert idx1 != idx2, (
+            f"Midpoint pair ({idx1}, {idx2}) should have different indices"
+        )
 
     print("  ✓ All midpoint pairs are valid")
 

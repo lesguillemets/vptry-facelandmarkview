@@ -146,7 +146,7 @@ def create_updated_histogram_demo(output_file="histogram_demo_updated.png"):
     print(f"Updated histogram demo saved to: {output_file}")
 
     # Print statistics
-    print(f"\nStatistics:")
+    print("\nStatistics:")
     print(f"  Total landmarks: {len(all_distances)}")
     print(f"  Distance range: [{all_distances.min():.4f}, {all_distances.max():.4f}]")
     print(

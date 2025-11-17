@@ -97,7 +97,9 @@ class HistogramWidget(QWidget):
 
     def set_alignment_landmarks(self, landmarks: list[int]) -> None:
         """Set custom landmarks to use for alignment calculation"""
-        logger.debug(f"Histogram: Setting alignment_landmarks to {len(landmarks)} landmarks")
+        logger.debug(
+            f"Histogram: Setting alignment_landmarks to {len(landmarks)} landmarks"
+        )
         self.alignment_landmarks = landmarks
         self._update_histogram()
         self.update()

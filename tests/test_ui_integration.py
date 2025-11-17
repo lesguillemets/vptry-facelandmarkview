@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 import numpy as np
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTimer
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -20,7 +19,7 @@ def test_ui_integration():
     """Test that the UI integrates properly with alignment methods"""
     print("Test: UI integration with alignment methods")
 
-    app = QApplication(sys.argv)
+    QApplication(sys.argv)
 
     # Create sample data file if it doesn't exist
     sample_file = Path("sample_landmarks.npy")

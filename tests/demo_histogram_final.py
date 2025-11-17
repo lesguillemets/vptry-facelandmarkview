@@ -160,7 +160,7 @@ def create_final_histogram_demo(output_file="histogram_demo_final.png"):
     print(f"Final histogram demo saved to: {output_file}")
 
     # Print statistics
-    print(f"\nStatistics:")
+    print("\nStatistics:")
     print(f"  Total landmarks: {len(all_distances)}")
     print(f"  Mean distance: {mean_dist:.4f}")
     print(f"  Variance: {var_dist:.6f}")

@@ -81,7 +81,7 @@ class FaceLandmarkViewer(QMainWindow):
         self.use_static_points: bool = False
         self.alignment_method: str = "default"
         self.initial_file: Optional[Path] = initial_file
-        
+
         # Store selected landmarks for alignment (initialized to default)
         self.selected_alignment_landmarks: list[int] = list(DEFAULT_ALIGNMENT_LANDMARKS)
 
@@ -108,7 +108,7 @@ class FaceLandmarkViewer(QMainWindow):
         self.load_button = QPushButton(LOAD_BUTTON_TEXT)
         self.load_button.clicked.connect(self.load_file)
         control_layout.addWidget(self.load_button)
-        
+
         # Choose landmarks button
         self.choose_landmarks_button = QPushButton(CHOOSE_LANDMARKS_BUTTON_TEXT)
         self.choose_landmarks_button.clicked.connect(self.open_landmark_selector)
@@ -380,22 +380,24 @@ class FaceLandmarkViewer(QMainWindow):
         """Open the landmark selector dialog"""
         logger.info("Opening landmark selector dialog")
         dialog = LandmarkSelectorDialog(self)
-        
+
         # Initialize the dialog with current selection
         dialog.selected_landmarks = set(self.selected_alignment_landmarks)
         dialog._update_checkboxes_from_selection()
-        
+
         if dialog.exec():  # User clicked OK
             # Update the stored selection
             self.selected_alignment_landmarks = dialog.get_selected_landmarks()
             logger.info(
                 f"Updated alignment landmarks: {len(self.selected_alignment_landmarks)} landmarks selected"
             )
-            
+
             # Update all widgets with new landmarks
             if self.data is not None:
                 self._update_all_widgets(
-                    lambda w: w.set_alignment_landmarks(self.selected_alignment_landmarks)
+                    lambda w: w.set_alignment_landmarks(
+                        self.selected_alignment_landmarks
+                    )
                 )
         else:
             logger.info("Landmark selection cancelled")
