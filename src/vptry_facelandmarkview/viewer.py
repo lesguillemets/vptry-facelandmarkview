@@ -3,7 +3,7 @@ Main window for the Face Landmark Viewer application.
 """
 
 import logging
-from typing import Optional
+from typing import Callable, Optional, Protocol
 from pathlib import Path
 
 import numpy as np
@@ -27,7 +27,30 @@ from vptry_facelandmarkview.gl_widget import LandmarkGLWidget
 from vptry_facelandmarkview.projection_widget import ProjectionWidget
 from vptry_facelandmarkview.constants import ProjectionType, PROJECTION_SIZE_PX
 
+# UI text constants
+WINDOW_TITLE = "Face Landmark Viewer (OpenGL)"
+LOAD_BUTTON_TEXT = "Load .npy File"
+BASE_FRAME_LABEL = "Base Frame:"
+FRAME_LABEL = "Frame:"
+SHOW_VECTORS_TEXT = "Show Vectors"
+ALIGN_FACES_TEXT = "Align Faces"
+LIMIT_STATIC_POINTS_TEXT = "Limit to Static Points"
+INITIAL_INFO_TEXT = "Load a .npy file to begin. Use mouse to rotate (drag) and zoom (wheel)."
+FILE_DIALOG_TITLE = "Open .npy File"
+FILE_DIALOG_FILTER = "NumPy Files (*.npy);;All Files (*)"
+
 logger = logging.getLogger(__name__)
+
+
+class VisualizationWidget(Protocol):
+    """Protocol for visualization widgets that can be updated together"""
+
+    def set_data(self, data: npt.NDArray[np.float64]) -> None: ...
+    def set_base_frame(self, frame: int) -> None: ...
+    def set_current_frame(self, frame: int) -> None: ...
+    def set_show_vectors(self, show: bool) -> None: ...
+    def set_align_faces(self, align: bool) -> None: ...
+    def set_use_static_points(self, use_static: bool) -> None: ...
 
 
 class FaceLandmarkViewer(QMainWindow):
@@ -45,7 +68,7 @@ class FaceLandmarkViewer(QMainWindow):
         self.use_static_points: bool = False
         self.initial_file: Optional[Path] = initial_file
 
-        self.setWindowTitle("Face Landmark Viewer (OpenGL)")
+        self.setWindowTitle(WINDOW_TITLE)
         self.setGeometry(100, 100, 1200, 800)
 
         self.init_ui()
@@ -65,12 +88,12 @@ class FaceLandmarkViewer(QMainWindow):
         control_layout = QHBoxLayout()
 
         # Load button
-        self.load_button = QPushButton("Load .npy File")
+        self.load_button = QPushButton(LOAD_BUTTON_TEXT)
         self.load_button.clicked.connect(self.load_file)
         control_layout.addWidget(self.load_button)
 
         # Base frame selector
-        control_layout.addWidget(QLabel("Base Frame:"))
+        control_layout.addWidget(QLabel(BASE_FRAME_LABEL))
         self.base_frame_spinbox = QSpinBox()
         self.base_frame_spinbox.setMinimum(0)
         self.base_frame_spinbox.setValue(0)
@@ -78,17 +101,17 @@ class FaceLandmarkViewer(QMainWindow):
         control_layout.addWidget(self.base_frame_spinbox)
 
         # Show vectors checkbox
-        self.show_vectors_checkbox = QCheckBox("Show Vectors")
+        self.show_vectors_checkbox = QCheckBox(SHOW_VECTORS_TEXT)
         self.show_vectors_checkbox.stateChanged.connect(self.on_show_vectors_changed)
         control_layout.addWidget(self.show_vectors_checkbox)
 
         # Align faces checkbox
-        self.align_faces_checkbox = QCheckBox("Align Faces")
+        self.align_faces_checkbox = QCheckBox(ALIGN_FACES_TEXT)
         self.align_faces_checkbox.stateChanged.connect(self.on_align_faces_changed)
         control_layout.addWidget(self.align_faces_checkbox)
 
         # Use static points checkbox (for alignment)
-        self.use_static_points_checkbox = QCheckBox("Limit to Static Points")
+        self.use_static_points_checkbox = QCheckBox(LIMIT_STATIC_POINTS_TEXT)
         self.use_static_points_checkbox.stateChanged.connect(
             self.on_use_static_points_changed
         )
@@ -100,7 +123,7 @@ class FaceLandmarkViewer(QMainWindow):
 
         # Frame slider
         slider_layout = QHBoxLayout()
-        slider_layout.addWidget(QLabel("Frame:"))
+        slider_layout.addWidget(QLabel(FRAME_LABEL))
 
         self.frame_slider = QSlider(Qt.Horizontal)
         self.frame_slider.setMinimum(0)
@@ -152,15 +175,45 @@ class FaceLandmarkViewer(QMainWindow):
         main_layout.addLayout(viz_grid, stretch=1)
 
         # Info label
-        self.info_label = QLabel(
-            "Load a .npy file to begin. Use mouse to rotate (drag) and zoom (wheel)."
-        )
+        self.info_label = QLabel(INITIAL_INFO_TEXT)
         main_layout.addWidget(self.info_label, stretch=0)
+
+    def _update_all_widgets(
+        self, update_fn: Callable[[VisualizationWidget], None]
+    ) -> None:
+        """Call the same update function on all visualization widgets
+        
+        Args:
+            update_fn: Function that takes a widget and performs the update
+        """
+        for widget in [self.gl_widget, self.xz_widget, self.yz_widget]:
+            update_fn(widget)
+
+    def _handle_checkbox_change(
+        self,
+        state: int,
+        attr_name: str,
+        setter_fn: Callable[[VisualizationWidget, bool], None],
+    ) -> None:
+        """Handle checkbox state change and update widgets
+        
+        Args:
+            state: Qt.CheckState value (0=Unchecked, 2=Checked)
+            attr_name: Name of the instance attribute to update
+            setter_fn: Function that takes a widget and bool value to perform the update
+        """
+        # Convert Qt state to boolean
+        bool_value = state == Qt.CheckState.Checked.value
+        setattr(self, attr_name, bool_value)
+        logger.debug(f"{attr_name} changed to: {bool_value} (state={state})")
+
+        if self.data is not None:
+            self._update_all_widgets(lambda w: setter_fn(w, bool_value))
 
     def load_file(self) -> None:
         """Load a .npy file via file dialog"""
         file_path_str, _ = QFileDialog.getOpenFileName(
-            self, "Open .npy File", "", "NumPy Files (*.npy);;All Files (*)"
+            self, FILE_DIALOG_TITLE, "", FILE_DIALOG_FILTER
         )
 
         if not file_path_str:
@@ -233,9 +286,7 @@ class FaceLandmarkViewer(QMainWindow):
 
             # Update OpenGL widgets
             logger.info("Updating OpenGL widgets with data")
-            self.gl_widget.set_data(self.data)
-            self.xz_widget.set_data(self.data)
-            self.yz_widget.set_data(self.data)
+            self._update_all_widgets(lambda w: w.set_data(self.data))
 
             # Update projections with center and scale from main widget
             self._update_projection_center_scale()
@@ -250,51 +301,33 @@ class FaceLandmarkViewer(QMainWindow):
         self.current_frame = value
         if self.data is not None:
             self.frame_label.setText(f"{value} / {self.data.shape[0] - 1}")
-            self.gl_widget.set_current_frame(value)
-            self.xz_widget.set_current_frame(value)
-            self.yz_widget.set_current_frame(value)
+            self._update_all_widgets(lambda w: w.set_current_frame(value))
 
     def on_base_frame_changed(self, value: int) -> None:
         """Handle base frame spinbox change"""
         self.base_frame = value
         if self.data is not None:
-            self.gl_widget.set_base_frame(value)
-            self.xz_widget.set_base_frame(value)
-            self.yz_widget.set_base_frame(value)
+            self._update_all_widgets(lambda w: w.set_base_frame(value))
             # Update center and scale for projections
             self._update_projection_center_scale()
 
     def on_show_vectors_changed(self, state: int) -> None:
         """Handle show vectors checkbox change"""
-        # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
-        self.show_vectors = state == Qt.CheckState.Checked.value
-        logger.debug(f"Show vectors changed to: {self.show_vectors} (state={state})")
-        if self.data is not None:
-            self.gl_widget.set_show_vectors(self.show_vectors)
-            self.xz_widget.set_show_vectors(self.show_vectors)
-            self.yz_widget.set_show_vectors(self.show_vectors)
+        self._handle_checkbox_change(
+            state, "show_vectors", lambda w, v: w.set_show_vectors(v)
+        )
 
     def on_align_faces_changed(self, state: int) -> None:
         """Handle align faces checkbox change"""
-        # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
-        self.align_faces = state == Qt.CheckState.Checked.value
-        logger.debug(f"Align faces changed to: {self.align_faces} (state={state})")
-        if self.data is not None:
-            self.gl_widget.set_align_faces(self.align_faces)
-            self.xz_widget.set_align_faces(self.align_faces)
-            self.yz_widget.set_align_faces(self.align_faces)
+        self._handle_checkbox_change(
+            state, "align_faces", lambda w, v: w.set_align_faces(v)
+        )
 
     def on_use_static_points_changed(self, state: int) -> None:
         """Handle use static points checkbox change"""
-        # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
-        self.use_static_points = state == Qt.CheckState.Checked.value
-        logger.debug(
-            f"Use static points changed to: {self.use_static_points} (state={state})"
+        self._handle_checkbox_change(
+            state, "use_static_points", lambda w, v: w.set_use_static_points(v)
         )
-        if self.data is not None:
-            self.gl_widget.set_use_static_points(self.use_static_points)
-            self.xz_widget.set_use_static_points(self.use_static_points)
-            self.yz_widget.set_use_static_points(self.use_static_points)
 
     def _update_projection_center_scale(self) -> None:
         """Update projection widgets with center and scale from base frame"""

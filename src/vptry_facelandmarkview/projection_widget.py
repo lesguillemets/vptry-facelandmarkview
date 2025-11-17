@@ -17,6 +17,10 @@ from vptry_facelandmarkview.constants import (
     ProjectionType,
     PROJECTION_VIEWPORT_FILL,
     PROJECTION_Z_SCALE,
+    BASE_LANDMARK_COLOR,
+    CURRENT_LANDMARK_COLOR,
+    VECTOR_COLOR,
+    DisplayState,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -44,11 +48,7 @@ class ProjectionWidget(QOpenGLWidget):
         super().__init__(parent)
         self.projection_type = projection_type
         self.data: Optional[npt.NDArray[np.float64]] = None
-        self.base_frame: int = 0
-        self.current_frame: int = 0
-        self.show_vectors: bool = False
-        self.align_faces: bool = False
-        self.use_static_points: bool = False
+        self.state = DisplayState()
 
         # Store shared center and scale from main widget
         self.center: Optional[npt.NDArray[np.float64]] = None
@@ -67,7 +67,7 @@ class ProjectionWidget(QOpenGLWidget):
         logger.debug(
             f"{self.projection_type} projection: Setting base frame to: {frame}"
         )
-        self.base_frame = frame
+        self.state.base_frame = frame
         self.update()
 
     def set_current_frame(self, frame: int) -> None:
@@ -75,7 +75,7 @@ class ProjectionWidget(QOpenGLWidget):
         logger.debug(
             f"{self.projection_type} projection: Setting current frame to: {frame}"
         )
-        self.current_frame = frame
+        self.state.current_frame = frame
         self.update()
 
     def set_show_vectors(self, show: bool) -> None:
@@ -83,7 +83,7 @@ class ProjectionWidget(QOpenGLWidget):
         logger.debug(
             f"{self.projection_type} projection: Setting show_vectors to: {show}"
         )
-        self.show_vectors = show
+        self.state.show_vectors = show
         self.update()
 
     def set_align_faces(self, align: bool) -> None:
@@ -91,7 +91,7 @@ class ProjectionWidget(QOpenGLWidget):
         logger.debug(
             f"{self.projection_type} projection: Setting align_faces to: {align}"
         )
-        self.align_faces = align
+        self.state.align_faces = align
         self.update()
 
     def set_use_static_points(self, use_static: bool) -> None:
@@ -99,7 +99,7 @@ class ProjectionWidget(QOpenGLWidget):
         logger.debug(
             f"{self.projection_type} projection: Setting use_static_points to: {use_static}"
         )
-        self.use_static_points = use_static
+        self.state.use_static_points = use_static
         self.update()
 
     def set_center_and_scale(
@@ -109,6 +109,27 @@ class ProjectionWidget(QOpenGLWidget):
         self.center = center
         self.scale = scale
         self.update()
+
+    def _project_to_2d(
+        self, scaled_point: npt.NDArray[np.float64]
+    ) -> tuple[float, float]:
+        """Project a scaled 3D point to 2D based on projection type
+        
+        Args:
+            scaled_point: 3D point already scaled and centered
+            
+        Returns:
+            Tuple of (x, y) coordinates in 2D projection space
+        """
+        if self.projection_type == ProjectionType.XZ:
+            # X-Z projection (top view) - x horizontal, z vertical (negated) with additional z-scale
+            return scaled_point[0], -scaled_point[2] * PROJECTION_Z_SCALE
+        elif self.projection_type == ProjectionType.YZ:
+            # Y-Z projection (side view) - z horizontal with additional z-scale, y vertical (negated, top is -y)
+            return scaled_point[2] * PROJECTION_Z_SCALE, -scaled_point[1]
+        else:  # xy
+            # X-Y projection (not used currently)
+            return scaled_point[0], -scaled_point[1]
 
     def initializeGL(self) -> None:
         """Initialize OpenGL"""
@@ -151,8 +172,8 @@ class ProjectionWidget(QOpenGLWidget):
             return
 
         # Get landmark data
-        base_landmarks = self.data[self.base_frame]
-        current_landmarks = self.data[self.current_frame]
+        base_landmarks = self.data[self.state.base_frame]
+        current_landmarks = self.data[self.state.current_frame]
 
         # Filter out NaN values
         base_landmarks_valid, base_valid_mask = filter_nan_landmarks(base_landmarks)
@@ -168,14 +189,14 @@ class ProjectionWidget(QOpenGLWidget):
 
         # Draw base frame landmarks (blue)
         self._draw_projection_landmarks(
-            base_landmarks_valid, (0.0, 0.0, 1.0, 0.6), "base"
+            base_landmarks_valid, BASE_LANDMARK_COLOR, "base"
         )
 
         # Create alignment function if enabled
         alignment_fn = None
-        if self.align_faces and len(current_landmarks_valid) > 0:
+        if self.state.align_faces and len(current_landmarks_valid) > 0:
             alignment_indices = None
-            if self.use_static_points:
+            if self.state.use_static_points:
                 alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
 
             alignment_fn = partial(
@@ -187,20 +208,20 @@ class ProjectionWidget(QOpenGLWidget):
         # Draw current frame landmarks (red)
         self._draw_projection_landmarks(
             current_landmarks_valid,
-            (1.0, 0.0, 0.0, 0.8),
+            CURRENT_LANDMARK_COLOR,
             "current",
             alignment_fn=alignment_fn,
         )
 
         # Draw vectors if enabled
-        if self.show_vectors and len(current_landmarks_valid) > 0:
+        if self.state.show_vectors and len(current_landmarks_valid) > 0:
             both_valid_mask = base_valid_mask & current_valid_mask
             base_landmarks_both = base_landmarks[both_valid_mask]
             current_landmarks_both = current_landmarks[both_valid_mask]
 
-            if self.align_faces and len(current_landmarks_both) > 0:
+            if self.state.align_faces and len(current_landmarks_both) > 0:
                 vector_alignment_indices = (
-                    DEFAULT_ALIGNMENT_LANDMARKS if self.use_static_points else None
+                    DEFAULT_ALIGNMENT_LANDMARKS if self.state.use_static_points else None
                 )
                 current_landmarks_both = align_landmarks_to_base(
                     current_landmarks_both,
@@ -238,18 +259,8 @@ class ProjectionWidget(QOpenGLWidget):
         for point in landmarks:
             # Project to 2D based on projection type
             scaled_point = (point - self.center) * self.scale
-
-            if self.projection_type == ProjectionType.XZ:
-                # X-Z projection (top view) - x horizontal, z vertical (negated) with additional z-scale
-                x, z = scaled_point[0], -scaled_point[2] * PROJECTION_Z_SCALE
-            elif self.projection_type == ProjectionType.YZ:
-                # Y-Z projection (side view) - z horizontal with additional z-scale, y vertical (negated, top is -y)
-                x, z = scaled_point[2] * PROJECTION_Z_SCALE, -scaled_point[1]
-            else:  # xy
-                # X-Y projection (not used currently)
-                x, z = scaled_point[0], -scaled_point[1]
-
-            gl.glVertex2f(x, z)
+            x, y = self._project_to_2d(scaled_point)
+            gl.glVertex2f(x, y)
 
         gl.glEnd()
 
@@ -263,26 +274,17 @@ class ProjectionWidget(QOpenGLWidget):
             f"{self.projection_type} projection: Drawing {len(base_landmarks)} vectors (green)"
         )
         gl.glLineWidth(1.0)
-        gl.glColor4f(0.0, 0.8, 0.0, 0.3)
+        gl.glColor4f(*VECTOR_COLOR)
         gl.glBegin(gl.GL_LINES)
 
         for base_pt, curr_pt in zip(base_landmarks, current_landmarks):
             scaled_base = (base_pt - self.center) * self.scale
             scaled_curr = (curr_pt - self.center) * self.scale
 
-            if self.projection_type == ProjectionType.XZ:
-                # X-Z projection - x horizontal, z vertical (negated) with additional z-scale
-                base_x, base_z = scaled_base[0], -scaled_base[2] * PROJECTION_Z_SCALE
-                curr_x, curr_z = scaled_curr[0], -scaled_curr[2] * PROJECTION_Z_SCALE
-            elif self.projection_type == ProjectionType.YZ:
-                # Y-Z projection - z horizontal with additional z-scale, y vertical (negated, top is -y)
-                base_x, base_z = scaled_base[2] * PROJECTION_Z_SCALE, -scaled_base[1]
-                curr_x, curr_z = scaled_curr[2] * PROJECTION_Z_SCALE, -scaled_curr[1]
-            else:  # xy
-                base_x, base_z = scaled_base[0], -scaled_base[1]
-                curr_x, curr_z = scaled_curr[0], -scaled_curr[1]
+            base_x, base_y = self._project_to_2d(scaled_base)
+            curr_x, curr_y = self._project_to_2d(scaled_curr)
 
-            gl.glVertex2f(base_x, base_z)
-            gl.glVertex2f(curr_x, curr_z)
+            gl.glVertex2f(base_x, base_y)
+            gl.glVertex2f(curr_x, curr_y)
 
         gl.glEnd()

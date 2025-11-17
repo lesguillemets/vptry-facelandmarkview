@@ -17,6 +17,28 @@ import OpenGL.GLU as glu
 from vptry_facelandmarkview.constants import (
     SCALE_MARGIN,
     DEFAULT_ALIGNMENT_LANDMARKS,
+    BASE_LANDMARK_COLOR,
+    CURRENT_LANDMARK_COLOR,
+    VECTOR_COLOR,
+    AXIS_X_COLOR,
+    AXIS_Y_COLOR,
+    AXIS_Z_COLOR,
+    DisplayState,
+    DEFAULT_ROTATION_X,
+    DEFAULT_ROTATION_Y,
+    DEFAULT_ZOOM,
+    MIN_ZOOM,
+    MAX_ZOOM,
+    ZOOM_IN_FACTOR,
+    ZOOM_OUT_FACTOR,
+    ROTATION_SENSITIVITY,
+    AXIS_LENGTH,
+    VECTOR_LINE_WIDTH,
+    AXIS_LINE_WIDTH,
+    BACKGROUND_COLOR,
+    PERSPECTIVE_FOV,
+    PERSPECTIVE_NEAR,
+    PERSPECTIVE_FAR,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -34,16 +56,12 @@ class LandmarkGLWidget(QOpenGLWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.data: Optional[npt.NDArray[np.float64]] = None
-        self.base_frame: int = 0
-        self.current_frame: int = 0
-        self.show_vectors: bool = False
-        self.align_faces: bool = False
-        self.use_static_points: bool = False
+        self.state = DisplayState()
 
         # Camera controls
-        self.rotation_x: float = 20.0
-        self.rotation_y: float = 45.0
-        self.zoom: float = 3.0
+        self.rotation_x: float = DEFAULT_ROTATION_X
+        self.rotation_y: float = DEFAULT_ROTATION_Y
+        self.zoom: float = DEFAULT_ZOOM
         self.last_pos: Optional[QPoint] = None
 
     def set_data(self, data: npt.NDArray[np.float64]) -> None:
@@ -55,31 +73,31 @@ class LandmarkGLWidget(QOpenGLWidget):
     def set_base_frame(self, frame: int) -> None:
         """Set the base frame"""
         logger.debug(f"Setting base frame to: {frame}")
-        self.base_frame = frame
+        self.state.base_frame = frame
         self.update()
 
     def set_current_frame(self, frame: int) -> None:
         """Set the current frame"""
         logger.debug(f"Setting current frame to: {frame}")
-        self.current_frame = frame
+        self.state.current_frame = frame
         self.update()
 
     def set_show_vectors(self, show: bool) -> None:
         """Set whether to show vectors"""
         logger.debug(f"Setting show_vectors to: {show}")
-        self.show_vectors = show
+        self.state.show_vectors = show
         self.update()
 
     def set_align_faces(self, align: bool) -> None:
         """Set whether to align faces to base frame"""
         logger.debug(f"Setting align_faces to: {align}")
-        self.align_faces = align
+        self.state.align_faces = align
         self.update()
 
     def set_use_static_points(self, use_static: bool) -> None:
         """Set whether to use only static points for alignment"""
         logger.debug(f"Setting use_static_points to: {use_static}")
-        self.use_static_points = use_static
+        self.state.use_static_points = use_static
         self.update()
 
     def initializeGL(self) -> None:
@@ -92,7 +110,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         gl.glEnable(gl.GL_LINE_SMOOTH)
         gl.glHint(gl.GL_POINT_SMOOTH_HINT, gl.GL_NICEST)
         gl.glHint(gl.GL_LINE_SMOOTH_HINT, gl.GL_NICEST)
-        gl.glClearColor(1.0, 1.0, 1.0, 1.0)
+        gl.glClearColor(*BACKGROUND_COLOR)
 
     def resizeGL(self, w: int, h: int) -> None:
         """Handle window resize"""
@@ -102,7 +120,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         gl.glLoadIdentity()
         aspect = w / h if h > 0 else 1.0
         logger.debug(f"Aspect ratio: {aspect}")
-        glu.gluPerspective(45.0, aspect, 0.1, 100.0)
+        glu.gluPerspective(PERSPECTIVE_FOV, aspect, PERSPECTIVE_NEAR, PERSPECTIVE_FAR)
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
     def paintGL(self) -> None:
@@ -124,9 +142,11 @@ class LandmarkGLWidget(QOpenGLWidget):
             return
 
         # Get landmark data
-        base_landmarks = self.data[self.base_frame]
-        current_landmarks = self.data[self.current_frame]
-        logger.info(f"Rendering frame {self.current_frame} (base: {self.base_frame})")
+        base_landmarks = self.data[self.state.base_frame]
+        current_landmarks = self.data[self.state.current_frame]
+        logger.info(
+            f"Rendering frame {self.state.current_frame} (base: {self.state.base_frame})"
+        )
         logger.debug(
             f"Base landmarks shape: {base_landmarks.shape}, Current landmarks shape: {current_landmarks.shape}"
         )
@@ -161,15 +181,15 @@ class LandmarkGLWidget(QOpenGLWidget):
 
         # Draw base frame landmarks (blue)
         draw_landmarks(
-            base_landmarks_valid, center, scale, (0.0, 0.0, 1.0, 0.6), "base"
+            base_landmarks_valid, center, scale, BASE_LANDMARK_COLOR, "base"
         )
 
         # Create alignment function if enabled
         alignment_fn = None
-        if self.align_faces and len(current_landmarks_valid) > 0:
+        if self.state.align_faces and len(current_landmarks_valid) > 0:
             # Determine which landmarks to use for alignment
             alignment_indices = None
-            if self.use_static_points:
+            if self.state.use_static_points:
                 # Use only nose + forehead landmarks for stable alignment
                 alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
                 logger.debug(
@@ -188,23 +208,23 @@ class LandmarkGLWidget(QOpenGLWidget):
             current_landmarks_valid,
             center,
             scale,
-            (1.0, 0.0, 0.0, 0.8),
+            CURRENT_LANDMARK_COLOR,
             "current",
             alignment_fn=alignment_fn,
         )
 
         # Draw vectors if enabled (only for landmarks that are valid in both frames)
-        if self.show_vectors and len(current_landmarks_valid) > 0:
+        if self.state.show_vectors and len(current_landmarks_valid) > 0:
             # Match valid landmarks from both frames
             both_valid_mask = base_valid_mask & current_valid_mask
             base_landmarks_both = base_landmarks[both_valid_mask]
             current_landmarks_both = current_landmarks[both_valid_mask]
 
             # Apply alignment to current landmarks if enabled
-            if self.align_faces and len(current_landmarks_both) > 0:
+            if self.state.align_faces and len(current_landmarks_both) > 0:
                 # Use same alignment indices for vectors
                 vector_alignment_indices = (
-                    DEFAULT_ALIGNMENT_LANDMARKS if self.use_static_points else None
+                    DEFAULT_ALIGNMENT_LANDMARKS if self.state.use_static_points else None
                 )
                 current_landmarks_both = align_landmarks_to_base(
                     current_landmarks_both,
@@ -214,8 +234,8 @@ class LandmarkGLWidget(QOpenGLWidget):
 
             if len(base_landmarks_both) > 0:
                 logger.debug(f"Drawing {len(base_landmarks_both)} vectors (green)")
-                gl.glLineWidth(1.0)
-                gl.glColor4f(0.0, 0.8, 0.0, 0.3)
+                gl.glLineWidth(VECTOR_LINE_WIDTH)
+                gl.glColor4f(*VECTOR_COLOR)
                 gl.glBegin(gl.GL_LINES)
                 for base_pt, curr_pt in zip(
                     base_landmarks_both, current_landmarks_both
@@ -234,24 +254,23 @@ class LandmarkGLWidget(QOpenGLWidget):
 
     def _draw_axes(self) -> None:
         """Draw coordinate axes"""
-        gl.glLineWidth(2.0)
-        axis_length = 1.5
+        gl.glLineWidth(AXIS_LINE_WIDTH)
 
         gl.glBegin(gl.GL_LINES)
         # X axis (red)
-        gl.glColor3f(1.0, 0.0, 0.0)
+        gl.glColor3f(*AXIS_X_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
-        gl.glVertex3f(axis_length, 0.0, 0.0)
+        gl.glVertex3f(AXIS_LENGTH, 0.0, 0.0)
 
         # Y axis (green)
-        gl.glColor3f(0.0, 1.0, 0.0)
+        gl.glColor3f(*AXIS_Y_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
-        gl.glVertex3f(0.0, axis_length, 0.0)
+        gl.glVertex3f(0.0, AXIS_LENGTH, 0.0)
 
         # Z axis (blue)
-        gl.glColor3f(0.0, 0.0, 1.0)
+        gl.glColor3f(*AXIS_Z_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
-        gl.glVertex3f(0.0, 0.0, axis_length)
+        gl.glVertex3f(0.0, 0.0, AXIS_LENGTH)
         gl.glEnd()
 
     def mousePressEvent(self, event) -> None:
@@ -265,8 +284,8 @@ class LandmarkGLWidget(QOpenGLWidget):
             dy = event.pos().y() - self.last_pos.y()
 
             if event.buttons() & Qt.LeftButton:
-                self.rotation_x += dy * 0.5
-                self.rotation_y += dx * 0.5
+                self.rotation_x += dy * ROTATION_SENSITIVITY
+                self.rotation_y += dx * ROTATION_SENSITIVITY
                 self.update()
 
             self.last_pos = event.pos()
@@ -275,8 +294,8 @@ class LandmarkGLWidget(QOpenGLWidget):
         """Handle mouse wheel for zoom"""
         delta = event.angleDelta().y()
         if delta > 0:
-            self.zoom *= 0.9
+            self.zoom *= ZOOM_IN_FACTOR
         else:
-            self.zoom *= 1.1
-        self.zoom = max(1.0, min(20.0, self.zoom))
+            self.zoom *= ZOOM_OUT_FACTOR
+        self.zoom = max(MIN_ZOOM, min(MAX_ZOOM, self.zoom))
         self.update()
