@@ -20,8 +20,9 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 - PyOpenGL
 - PyOpenGL-accelerate (optional, for better performance)
 
-## Installation
+## Installation / Usage
 
+### Using uv
 First, install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you haven't already.
 
 Then, the first time you run the application with `uv run`, it will automatically sync dependencies. Alternatively, you can manually sync:
@@ -34,9 +35,25 @@ For development with additional tools (linters, type checkers):
 uv sync --all-groups
 ```
 
+### Without uv
+
+`pyproject.toml` will make the life easier.
+
+```bash
+pip install -e .
+```
+
+For development (with linters and type checkers), if your managers don't recognise `[dependency-groups]`:
+
+```bash
+pip install pyright ruff
+```
+
 ## Usage
 
 ### Running the Application
+
+In all of the following, omit `uv run` if you used `pip install -e .`.
 
 **Using uv run:**
 ```bash
