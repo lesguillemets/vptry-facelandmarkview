@@ -157,6 +157,34 @@ class FaceLandmarkViewer(QMainWindow):
         )
         main_layout.addWidget(self.info_label, stretch=0)
 
+    def _update_all_widgets(self, method_name: str, *args) -> None:
+        """Call the same method on all visualization widgets
+        
+        Args:
+            method_name: Name of the method to call
+            *args: Arguments to pass to the method
+        """
+        for widget in [self.gl_widget, self.xz_widget, self.yz_widget]:
+            getattr(widget, method_name)(*args)
+
+    def _handle_checkbox_change(
+        self, state: int, attr_name: str, setter_name: str
+    ) -> None:
+        """Handle checkbox state change and update widgets
+        
+        Args:
+            state: Qt.CheckState value (0=Unchecked, 2=Checked)
+            attr_name: Name of the instance attribute to update
+            setter_name: Name of the setter method to call on widgets
+        """
+        # Convert Qt state to boolean
+        bool_value = state == Qt.CheckState.Checked.value
+        setattr(self, attr_name, bool_value)
+        logger.debug(f"{attr_name} changed to: {bool_value} (state={state})")
+        
+        if self.data is not None:
+            self._update_all_widgets(setter_name, bool_value)
+
     def load_file(self) -> None:
         """Load a .npy file via file dialog"""
         file_path_str, _ = QFileDialog.getOpenFileName(
@@ -233,9 +261,7 @@ class FaceLandmarkViewer(QMainWindow):
 
             # Update OpenGL widgets
             logger.info("Updating OpenGL widgets with data")
-            self.gl_widget.set_data(self.data)
-            self.xz_widget.set_data(self.data)
-            self.yz_widget.set_data(self.data)
+            self._update_all_widgets("set_data", self.data)
 
             # Update projections with center and scale from main widget
             self._update_projection_center_scale()
@@ -250,51 +276,29 @@ class FaceLandmarkViewer(QMainWindow):
         self.current_frame = value
         if self.data is not None:
             self.frame_label.setText(f"{value} / {self.data.shape[0] - 1}")
-            self.gl_widget.set_current_frame(value)
-            self.xz_widget.set_current_frame(value)
-            self.yz_widget.set_current_frame(value)
+            self._update_all_widgets("set_current_frame", value)
 
     def on_base_frame_changed(self, value: int) -> None:
         """Handle base frame spinbox change"""
         self.base_frame = value
         if self.data is not None:
-            self.gl_widget.set_base_frame(value)
-            self.xz_widget.set_base_frame(value)
-            self.yz_widget.set_base_frame(value)
+            self._update_all_widgets("set_base_frame", value)
             # Update center and scale for projections
             self._update_projection_center_scale()
 
     def on_show_vectors_changed(self, state: int) -> None:
         """Handle show vectors checkbox change"""
-        # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
-        self.show_vectors = state == Qt.CheckState.Checked.value
-        logger.debug(f"Show vectors changed to: {self.show_vectors} (state={state})")
-        if self.data is not None:
-            self.gl_widget.set_show_vectors(self.show_vectors)
-            self.xz_widget.set_show_vectors(self.show_vectors)
-            self.yz_widget.set_show_vectors(self.show_vectors)
+        self._handle_checkbox_change(state, "show_vectors", "set_show_vectors")
 
     def on_align_faces_changed(self, state: int) -> None:
         """Handle align faces checkbox change"""
-        # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
-        self.align_faces = state == Qt.CheckState.Checked.value
-        logger.debug(f"Align faces changed to: {self.align_faces} (state={state})")
-        if self.data is not None:
-            self.gl_widget.set_align_faces(self.align_faces)
-            self.xz_widget.set_align_faces(self.align_faces)
-            self.yz_widget.set_align_faces(self.align_faces)
+        self._handle_checkbox_change(state, "align_faces", "set_align_faces")
 
     def on_use_static_points_changed(self, state: int) -> None:
         """Handle use static points checkbox change"""
-        # state is Qt.CheckState enum value: 0=Unchecked, 2=Checked
-        self.use_static_points = state == Qt.CheckState.Checked.value
-        logger.debug(
-            f"Use static points changed to: {self.use_static_points} (state={state})"
+        self._handle_checkbox_change(
+            state, "use_static_points", "set_use_static_points"
         )
-        if self.data is not None:
-            self.gl_widget.set_use_static_points(self.use_static_points)
-            self.xz_widget.set_use_static_points(self.use_static_points)
-            self.yz_widget.set_use_static_points(self.use_static_points)
 
     def _update_projection_center_scale(self) -> None:
         """Update projection widgets with center and scale from base frame"""
