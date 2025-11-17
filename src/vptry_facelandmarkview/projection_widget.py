@@ -119,14 +119,9 @@ class ProjectionWidget(QOpenGLWidget):
         
         # Set up orthographic projection for 2D view
         # Scale to use configured percentage of axis span (data spans roughly from -1 to 1 after scaling)
+        # Don't maintain aspect ratio - fill the available space to maximize landmark visibility
         view_range = 1.0 / PROJECTION_VIEWPORT_FILL
-        aspect = w / h if h > 0 else 1.0
-        if aspect > 1.0:
-            # Width is larger
-            gl.glOrtho(-aspect * view_range, aspect * view_range, -view_range, view_range, -1.0, 1.0)
-        else:
-            # Height is larger
-            gl.glOrtho(-view_range, view_range, -view_range / aspect, view_range / aspect, -1.0, 1.0)
+        gl.glOrtho(-view_range, view_range, -view_range, view_range, -1.0, 1.0)
         
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
