@@ -174,113 +174,99 @@ class HistogramWidget(QWidget):
         """Paint the histogram"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        
+
         # Fill background
         painter.fillRect(self.rect(), HISTOGRAM_BG_COLOR)
-        
+
         if self.hist_values is None or self.bin_edges is None:
             # No data to display
             painter.setPen(TEXT_COLOR)
             painter.drawText(self.rect(), Qt.AlignCenter, "No data")
             return
-        
+
         # Define margins
         margin_left = 10
         margin_right = 30  # Extra space for outlier bar
         margin_top = 10
         margin_bottom = 25  # Space for x-axis labels
-        
+
         width = self.width() - margin_left - margin_right
         height = self.height() - margin_top - margin_bottom
-        
+
         if width <= 0 or height <= 0:
             return
-        
+
         # Calculate bar width
         n_bins = len(self.hist_values)
         bar_width = width / (n_bins + 1)  # +1 for outlier bar
-        
+
         # Find max count for scaling (include outliers in scaling calculation)
-        max_count = max(self.hist_values.max(), self.outlier_count) if len(self.hist_values) > 0 else 1
+        max_count = (
+            max(self.hist_values.max(), self.outlier_count)
+            if len(self.hist_values) > 0
+            else 1
+        )
         if max_count == 0:
             max_count = 1
-        
+
         # Draw histogram bars
         for i, count in enumerate(self.hist_values):
             if count > 0:
                 bar_height = (count / max_count) * height
                 x = margin_left + i * bar_width
                 y = margin_top + height - bar_height
-                
+
                 painter.fillRect(
-                    int(x), int(y), 
-                    int(bar_width - 1), int(bar_height),
-                    BAR_COLOR
+                    int(x), int(y), int(bar_width - 1), int(bar_height), BAR_COLOR
                 )
-        
+
         # Draw outlier bar (red) if there are any outliers
         if self.outlier_count > 0:
             bar_height = (self.outlier_count / max_count) * height
             x = margin_left + n_bins * bar_width
             y = margin_top + height - bar_height
-            
+
             painter.fillRect(
-                int(x), int(y),
-                int(bar_width - 1), int(bar_height),
-                OUTLIER_BAR_COLOR
+                int(x), int(y), int(bar_width - 1), int(bar_height), OUTLIER_BAR_COLOR
             )
-        
+
         # Draw axes
         painter.setPen(QPen(AXIS_COLOR, 2))
         # X-axis
         painter.drawLine(
-            margin_left, margin_top + height,
-            margin_left + width, margin_top + height
+            margin_left, margin_top + height, margin_left + width, margin_top + height
         )
         # Y-axis
-        painter.drawLine(
-            margin_left, margin_top,
-            margin_left, margin_top + height
-        )
-        
+        painter.drawLine(margin_left, margin_top, margin_left, margin_top + height)
+
         # Draw y-axis tick at the top showing max count
-        painter.drawLine(
-            margin_left - 3, margin_top,
-            margin_left + 3, margin_top
-        )
-        
+        painter.drawLine(margin_left - 3, margin_top, margin_left + 3, margin_top)
+
         # Draw x-axis labels
         painter.setPen(TEXT_COLOR)
         font = QFont()
         font.setPointSize(7)
         painter.setFont(font)
-        
+
         # Label for y-axis max (at the top)
-        painter.drawText(
-            margin_left - 25, margin_top + 5,
-            f"{max_count}"
-        )
-        
+        painter.drawText(margin_left - 25, margin_top + 5, f"{max_count}")
+
         # Label at start (0)
         # Note: Multiply by 100 to convert from decimal to more readable scale
-        painter.drawText(
-            margin_left - 5, margin_top + height + 15,
-            "0"
-        )
-        
+        painter.drawText(margin_left - 5, margin_top + height + 15, "0")
+
         # Label at end (95th percentile value)
         # Note: Multiply by 100 to convert from decimal to more readable scale
         if self.bin_edges is not None and len(self.bin_edges) > 0:
             max_label = f"{self.bin_edges[-1] * 100:.1f}"
             painter.drawText(
-                margin_left + width - 20, margin_top + height + 15,
-                max_label
+                margin_left + width - 20, margin_top + height + 15, max_label
             )
-            
+
             # Label for outliers if present
             if self.outlier_count > 0:
                 painter.setPen(OUTLIER_BAR_COLOR)
-                painter.drawText(
-                    margin_left + width + 5, margin_top + height + 15,
-                    f">{OUTLIER_PERCENTILE}%"
-                )
+                # painter.drawText(
+                #     margin_left + width + 5, margin_top + height + 15,
+                #     f">{OUTLIER_PERCENTILE}%"
+                # )
