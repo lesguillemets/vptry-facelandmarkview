@@ -165,7 +165,9 @@ class HistogramWidget(QWidget):
         if len(non_outlier_distances) > 0:
             # Create histogram with bins from 0 to rounded 95th percentile
             self.hist_values, self.bin_edges = np.histogram(
-                non_outlier_distances, bins=HISTOGRAM_BINS, range=(0, percentile_95_rounded)
+                non_outlier_distances,
+                bins=HISTOGRAM_BINS,
+                range=(0, percentile_95_rounded),
             )
             logger.debug(
                 f"Histogram created: {len(non_outlier_distances)} values, "
@@ -216,7 +218,7 @@ class HistogramWidget(QWidget):
         )
         if max_count_raw == 0:
             max_count_raw = 1
-        
+
         # Round y-max to nearest 50 for easier frame comparison
         # e.g., if max is 13, round up to 50; if 52, round up to 100
         max_count = int(np.ceil(max_count_raw / 50) * 50)
