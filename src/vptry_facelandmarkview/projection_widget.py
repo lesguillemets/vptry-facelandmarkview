@@ -17,6 +17,9 @@ from vptry_facelandmarkview.constants import (
     ProjectionType,
     PROJECTION_VIEWPORT_FILL,
     PROJECTION_Z_SCALE,
+    BASE_LANDMARK_COLOR,
+    CURRENT_LANDMARK_COLOR,
+    VECTOR_COLOR,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -168,7 +171,7 @@ class ProjectionWidget(QOpenGLWidget):
 
         # Draw base frame landmarks (blue)
         self._draw_projection_landmarks(
-            base_landmarks_valid, (0.0, 0.0, 1.0, 0.6), "base"
+            base_landmarks_valid, BASE_LANDMARK_COLOR, "base"
         )
 
         # Create alignment function if enabled
@@ -187,7 +190,7 @@ class ProjectionWidget(QOpenGLWidget):
         # Draw current frame landmarks (red)
         self._draw_projection_landmarks(
             current_landmarks_valid,
-            (1.0, 0.0, 0.0, 0.8),
+            CURRENT_LANDMARK_COLOR,
             "current",
             alignment_fn=alignment_fn,
         )
@@ -263,7 +266,7 @@ class ProjectionWidget(QOpenGLWidget):
             f"{self.projection_type} projection: Drawing {len(base_landmarks)} vectors (green)"
         )
         gl.glLineWidth(1.0)
-        gl.glColor4f(0.0, 0.8, 0.0, 0.3)
+        gl.glColor4f(*VECTOR_COLOR)
         gl.glBegin(gl.GL_LINES)
 
         for base_pt, curr_pt in zip(base_landmarks, current_landmarks):

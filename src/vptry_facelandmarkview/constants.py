@@ -3,6 +3,7 @@ Constants used throughout the Face Landmark Viewer application.
 """
 
 from enum import Enum
+from typing import NamedTuple
 
 POINT_SIZE = 2.0
 SCALE_MARGIN = 1.2  # 20% margin for scaling
@@ -15,6 +16,27 @@ PROJECTION_VIEWPORT_FILL = 0.8  # Landmarks should span 80% of the viewport
 PROJECTION_Z_SCALE = (
     1.5  # Additional scaling factor for z-axis to enhance depth visibility
 )
+
+
+# Color constants for rendering (RGBA tuples)
+class Color(NamedTuple):
+    """RGBA color representation"""
+
+    r: float
+    g: float
+    b: float
+    a: float
+
+
+# Landmark colors
+BASE_LANDMARK_COLOR = Color(0.0, 0.0, 1.0, 0.6)  # Blue with transparency
+CURRENT_LANDMARK_COLOR = Color(1.0, 0.0, 0.0, 0.8)  # Red with transparency
+VECTOR_COLOR = Color(0.0, 0.8, 0.0, 0.3)  # Green with transparency
+
+# Axis colors (RGB only)
+AXIS_X_COLOR = (1.0, 0.0, 0.0)  # Red
+AXIS_Y_COLOR = (0.0, 1.0, 0.0)  # Green
+AXIS_Z_COLOR = (0.0, 0.0, 1.0)  # Blue
 
 
 class ProjectionType(Enum):

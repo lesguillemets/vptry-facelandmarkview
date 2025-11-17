@@ -17,6 +17,12 @@ import OpenGL.GLU as glu
 from vptry_facelandmarkview.constants import (
     SCALE_MARGIN,
     DEFAULT_ALIGNMENT_LANDMARKS,
+    BASE_LANDMARK_COLOR,
+    CURRENT_LANDMARK_COLOR,
+    VECTOR_COLOR,
+    AXIS_X_COLOR,
+    AXIS_Y_COLOR,
+    AXIS_Z_COLOR,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -161,7 +167,7 @@ class LandmarkGLWidget(QOpenGLWidget):
 
         # Draw base frame landmarks (blue)
         draw_landmarks(
-            base_landmarks_valid, center, scale, (0.0, 0.0, 1.0, 0.6), "base"
+            base_landmarks_valid, center, scale, BASE_LANDMARK_COLOR, "base"
         )
 
         # Create alignment function if enabled
@@ -188,7 +194,7 @@ class LandmarkGLWidget(QOpenGLWidget):
             current_landmarks_valid,
             center,
             scale,
-            (1.0, 0.0, 0.0, 0.8),
+            CURRENT_LANDMARK_COLOR,
             "current",
             alignment_fn=alignment_fn,
         )
@@ -215,7 +221,7 @@ class LandmarkGLWidget(QOpenGLWidget):
             if len(base_landmarks_both) > 0:
                 logger.debug(f"Drawing {len(base_landmarks_both)} vectors (green)")
                 gl.glLineWidth(1.0)
-                gl.glColor4f(0.0, 0.8, 0.0, 0.3)
+                gl.glColor4f(*VECTOR_COLOR)
                 gl.glBegin(gl.GL_LINES)
                 for base_pt, curr_pt in zip(
                     base_landmarks_both, current_landmarks_both
@@ -239,17 +245,17 @@ class LandmarkGLWidget(QOpenGLWidget):
 
         gl.glBegin(gl.GL_LINES)
         # X axis (red)
-        gl.glColor3f(1.0, 0.0, 0.0)
+        gl.glColor3f(*AXIS_X_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
         gl.glVertex3f(axis_length, 0.0, 0.0)
 
         # Y axis (green)
-        gl.glColor3f(0.0, 1.0, 0.0)
+        gl.glColor3f(*AXIS_Y_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
         gl.glVertex3f(0.0, axis_length, 0.0)
 
         # Z axis (blue)
-        gl.glColor3f(0.0, 0.0, 1.0)
+        gl.glColor3f(*AXIS_Z_COLOR)
         gl.glVertex3f(0.0, 0.0, 0.0)
         gl.glVertex3f(0.0, 0.0, axis_length)
         gl.glEnd()
