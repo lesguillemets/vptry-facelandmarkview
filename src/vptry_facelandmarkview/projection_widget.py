@@ -107,14 +107,6 @@ class ProjectionWidget(QOpenGLWidget):
         self.state.alignment_method = method
         self.update()
 
-    def set_alignment_landmarks(self, landmarks: list[int]) -> None:
-        """Set custom landmarks to use for alignment calculation"""
-        logger.debug(
-            f"{self.projection_type} projection: Setting alignment_landmarks to {len(landmarks)} landmarks"
-        )
-        self.state.alignment_landmarks = landmarks
-        self.update()
-
     def set_center_and_scale(
         self, center: npt.NDArray[np.float64], scale: float
     ) -> None:
@@ -216,11 +208,7 @@ class ProjectionWidget(QOpenGLWidget):
 
             alignment_indices = None
             if self.state.use_static_points:
-                alignment_indices = (
-                    self.state.alignment_landmarks
-                    if self.state.alignment_landmarks is not None
-                    else DEFAULT_ALIGNMENT_LANDMARKS
-                )
+                alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
 
             alignment_fn = partial(
                 align_func,
@@ -249,14 +237,11 @@ class ProjectionWidget(QOpenGLWidget):
                 # Get the selected alignment function
                 align_func = get_alignment_method(self.state.alignment_method)
 
-                if self.state.use_static_points:
-                    vector_alignment_indices = (
-                        self.state.alignment_landmarks
-                        if self.state.alignment_landmarks is not None
-                        else DEFAULT_ALIGNMENT_LANDMARKS
-                    )
-                else:
-                    vector_alignment_indices = None
+                vector_alignment_indices = (
+                    DEFAULT_ALIGNMENT_LANDMARKS
+                    if self.state.use_static_points
+                    else None
+                )
                 current_landmarks_both = align_func(
                     current_landmarks_both,
                     base_landmarks_both,

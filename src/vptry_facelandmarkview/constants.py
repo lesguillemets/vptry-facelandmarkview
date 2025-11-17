@@ -77,7 +77,6 @@ class DisplayState:
     align_faces: bool = False
     use_static_points: bool = False
     alignment_method: str = "default"  # Name of alignment method to use
-    alignment_landmarks: list[int] | None = None  # Custom landmarks for alignment (None means use DEFAULT_ALIGNMENT_LANDMARKS)
 
 
 # Landmark indices for alignment using stable facial features
