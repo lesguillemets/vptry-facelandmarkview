@@ -1,14 +1,16 @@
 """
 Scipy Procrustes alignment method.
 
-Uses scipy.spatial.procrustes for aligning landmarks.
+Implements the Procrustes alignment algorithm with scaling, following the
+approach used by scipy.spatial.procrustes. Unlike scipy's function which
+standardizes both input matrices (centering at origin), this implementation
+preserves the base landmarks' position and scale in the output.
 """
 
 import logging
 from typing import Optional
 import numpy as np
 import numpy.typing as npt
-from scipy.spatial import procrustes
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +20,13 @@ def align_landmarks_scipy_procrustes(
     base_landmarks: npt.NDArray[np.float64],
     alignment_indices: Optional[set[int] | list[int]] = None,
 ) -> npt.NDArray[np.float64]:
-    """Align landmarks to base landmarks using scipy's procrustes analysis
+    """Align landmarks to base landmarks using Procrustes analysis with scaling
 
-    This uses scipy.spatial.procrustes to compute the optimal transformation.
-    Unlike the default method, scipy's procrustes includes scaling in addition
-    to rotation and translation.
+    This implements the Procrustes alignment algorithm following scipy's approach,
+    which includes scaling in addition to rotation and translation. The transformation
+    is computed to minimize the sum of squared differences between the aligned
+    landmarks and the base landmarks, while preserving the base landmarks' position
+    and scale in the output.
 
     Args:
         landmarks: Landmarks to align (n_points, 3)
@@ -75,52 +79,64 @@ def align_landmarks_scipy_procrustes(
         landmarks_for_alignment = landmarks
         base_for_alignment = base_landmarks
 
-    # Use scipy's procrustes to compute transformation
-    # Note: procrustes returns (mtx1, mtx2, disparity)
-    # mtx1 is the standardized version of the first matrix (target)
-    # mtx2 is the transformed version of the second matrix (aligned to mtx1)
-    # We want to transform landmarks to match base_landmarks
-    _, aligned_subset, disparity = procrustes(
-        base_for_alignment, landmarks_for_alignment
-    )
+    # Important: scipy's procrustes standardizes BOTH input matrices
+    # (centers at origin and scales to unit norm). We cannot use the returned
+    # mtx2 directly as it would place landmarks at the origin instead of
+    # at the base landmarks' position.
+    #
+    # Solution: Manually compute and apply the transformation while preserving
+    # the base landmarks' position and scale.
 
+    # Center both point sets
+    base_center = base_for_alignment.mean(axis=0)
+    landmarks_center = landmarks_for_alignment.mean(axis=0)
+
+    base_centered = base_for_alignment - base_center
+    landmarks_centered = landmarks_for_alignment - landmarks_center
+
+    # Compute norms
+    base_norm = np.linalg.norm(base_centered)
+    landmarks_norm = np.linalg.norm(landmarks_centered)
+
+    if base_norm == 0 or landmarks_norm == 0:
+        logger.warning("Zero norm encountered in procrustes alignment")
+        return landmarks
+
+    # Normalize for computing optimal rotation
+    base_normalized = base_centered / base_norm
+    landmarks_normalized = landmarks_centered / landmarks_norm
+
+    # Compute optimal rotation using SVD (Kabsch algorithm)
+    H = landmarks_normalized.T @ base_normalized
+    U, _, Vt = np.linalg.svd(H)
+    d = np.linalg.det(Vt.T @ U.T)
+    R = Vt.T @ np.diag([1, 1, d]) @ U.T
+
+    # Compute optimal scale (this is what procrustes does)
+    scale = np.trace(base_normalized.T @ (R @ landmarks_normalized.T).T)
+
+    # Compute disparity for logging (same as scipy's procrustes would return)
+    disparity = np.sum((base_normalized - scale * (R @ landmarks_normalized.T).T) ** 2)
     logger.debug(f"Scipy procrustes disparity: {disparity:.6f}")
 
-    # If we used a subset for alignment, we need to apply the transformation to all landmarks
+    # Apply transformation to the specified subset or all landmarks
     if alignment_indices is not None and len(indices_list) < len(landmarks):
-        # Compute the transformation parameters from the subset
-        # Center both sets
-        landmarks_center = landmarks_for_alignment.mean(axis=0)
-        base_center = base_for_alignment.mean(axis=0)
-        aligned_subset_center = aligned_subset.mean(axis=0)
-
-        # Compute scale
-        landmarks_norm = np.linalg.norm(landmarks_for_alignment - landmarks_center)
-        aligned_norm = np.linalg.norm(aligned_subset - aligned_subset_center)
-        scale = aligned_norm / landmarks_norm if landmarks_norm > 0 else 1.0
-
-        # Compute rotation from the subset
-        landmarks_centered = (landmarks_for_alignment - landmarks_center) / (
-            landmarks_norm if landmarks_norm > 0 else 1.0
-        )
-        base_centered = (base_for_alignment - base_center) / (
-            np.linalg.norm(base_for_alignment - base_center)
-        )
-
-        H = landmarks_centered.T @ base_centered
-        U, _, Vt = np.linalg.svd(H)
-        d = np.linalg.det(Vt.T @ U.T)
-        rotation = Vt.T @ np.diag([1, 1, d]) @ U.T
-
-        # Apply transformation to all landmarks
+        # Apply to all landmarks using computed transformation
         all_landmarks_centered = landmarks - landmarks_center
-        aligned = scale * (rotation @ all_landmarks_centered.T).T + base_center
-
+        # Transform: center -> rotate -> scale -> translate to base position
+        aligned = (
+            scale * (all_landmarks_centered @ R.T) * (base_norm / landmarks_norm)
+            + base_center
+        )
         logger.debug(
-            f"Applied computed transformation to all landmarks: scale={scale:.3f}"
+            f"Applied transformation to all landmarks: scale={scale:.3f}, "
+            f"base_norm/landmarks_norm={base_norm/landmarks_norm:.3f}"
         )
     else:
-        # All landmarks were used for alignment, so aligned_subset is the result
-        aligned = aligned_subset
+        # Apply to landmarks_for_alignment (which is same as landmarks when no indices)
+        aligned = (
+            scale * (landmarks_centered @ R.T) * (base_norm / landmarks_norm)
+            + base_center
+        )
 
     return aligned
