@@ -150,10 +150,10 @@ class HistogramWidget(QWidget):
 
         # Calculate the 95th percentile for the histogram range
         percentile_95 = np.percentile(distances, OUTLIER_PERCENTILE)
-        
-        # Round x-max (95th percentile) to nearest 0.5 for easier frame comparison
-        # e.g., if percentile is 0.52, round up to 1.0; if 0.35, round to 0.5
-        percentile_95_rounded = np.ceil(percentile_95 / 0.5) * 0.5
+
+        # Round x-max (95th percentile) to nearest 0.005 for easier frame comparison
+        # e.g., if percentile is 0.0052, round up to 0.01; if 0.0035, round to 0.005
+        percentile_95_rounded = np.ceil(percentile_95 / 0.005) * 0.005
 
         # Count outliers (values above 95th percentile)
         outlier_mask = distances > percentile_95
