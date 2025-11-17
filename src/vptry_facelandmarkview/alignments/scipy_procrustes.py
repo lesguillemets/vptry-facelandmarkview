@@ -112,35 +112,35 @@ def align_landmarks_scipy_procrustes(
     if alignment_indices is not None and len(indices_list) < len(landmarks):
         # We need to apply the same transformation that scipy.procrustes computed
         # to all landmarks, not just the subset.
-        
+
         # The transformation from landmarks_for_alignment to aligned_subset_std involves:
         # 1. Centering landmarks
         # 2. Scaling to unit norm
         # 3. Rotation/reflection to align with base
         # 4. Scaling by optimal scale factor
-        
+
         # To apply this to all landmarks, we need to compute the transformation parameters
         landmarks_center = landmarks_for_alignment.mean(axis=0)
         landmarks_centered = landmarks_for_alignment - landmarks_center
         landmarks_norm = np.linalg.norm(landmarks_centered)
-        
+
         if landmarks_norm == 0:
             logger.warning("Landmarks have zero norm, returning original landmarks")
             return landmarks
-        
+
         # Normalize to match what scipy.procrustes does internally
         landmarks_normalized = landmarks_centered / landmarks_norm
         base_normalized = base_centered / base_norm
-        
+
         # Compute rotation matrix from the normalized sets (using Kabsch algorithm)
         H = landmarks_normalized.T @ base_normalized
         U, _, Vt = np.linalg.svd(H)
         d = np.linalg.det(Vt.T @ U.T)
         R = Vt.T @ np.diag([1, 1, d]) @ U.T
-        
+
         # Compute the optimal scale (what scipy.procrustes computes)
         scale = np.trace(base_normalized.T @ (R @ landmarks_normalized.T).T)
-        
+
         # Now apply the full transformation to ALL landmarks:
         # 1. Center at landmarks_center
         # 2. Normalize by landmarks_norm
@@ -150,10 +150,8 @@ def align_landmarks_scipy_procrustes(
         # 6. Translate to base_center
         all_landmarks_centered = landmarks - landmarks_center
         all_landmarks_normalized = all_landmarks_centered / landmarks_norm
-        aligned = (
-            scale * (all_landmarks_normalized @ R.T) * base_norm + base_center
-        )
-        
+        aligned = scale * (all_landmarks_normalized @ R.T) * base_norm + base_center
+
         logger.debug(
             f"Applied transformation to all {len(landmarks)} landmarks "
             f"(scale={scale:.3f}, rotation det={np.linalg.det(R):.3f})"
