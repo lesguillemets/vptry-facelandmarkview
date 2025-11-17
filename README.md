@@ -22,6 +22,8 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 
 ## Installation
 
+### Option 1: Using uv (Recommended)
+
 First, install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you haven't already.
 
 Then, the first time you run the application with `uv run`, it will automatically sync dependencies. Alternatively, you can manually sync:
@@ -34,38 +36,72 @@ For development with additional tools (linters, type checkers):
 uv sync --all-groups
 ```
 
+### Option 2: Using pip
+
+If you prefer to use pip or another package manager, you can install the package directly since it has a proper `pyproject.toml`:
+
+**For regular usage:**
+```bash
+pip install -e .
+```
+
+**For development (with linters and type checkers):**
+```bash
+pip install -e .
+pip install pyright ruff
+```
+
+> **Note**: The project uses PEP 735 dependency groups (`[dependency-groups]`) which is not yet supported by pip. To install development tools, you'll need to install them separately as shown above.
+
 ## Usage
 
 ### Running the Application
 
-**Using uv run:**
+**If you installed with uv:**
 ```bash
 uv run facelandmarkview
 ```
 
-**Or using the Python module:**
+**If you installed with pip:**
 ```bash
-uv run python -m vptry_facelandmarkview.main
+facelandmarkview
 ```
 
-**Or using backward compatibility wrapper:**
+**Or using the Python module (works with both):**
 ```bash
-uv run python facelandmarkview.py
+python -m vptry_facelandmarkview.main
+```
+
+**Or using backward compatibility wrapper (works with both):**
+```bash
+python facelandmarkview.py
 ```
 
 **Load a file directly from command line:**
 ```bash
+# With uv:
 uv run facelandmarkview sample_landmarks.npy
+
+# With pip:
+facelandmarkview sample_landmarks.npy
 ```
 
 **Load a file with a specific base frame:**
 ```bash
+# With uv:
 uv run facelandmarkview sample_landmarks.npy --base-frame 10
+
+# With pip:
+facelandmarkview sample_landmarks.npy --base-frame 10
 ```
 
 **View help and options:**
 ```bash
+# With uv:
 uv run facelandmarkview --help
+
+# With pip:
+facelandmarkview --help
 ```
 
 ### Data Format
@@ -85,7 +121,11 @@ For each frame `fr` and landmark `p`:
 To generate sample data for testing:
 
 ```bash
+# With uv:
 uv run python tests/generate_sample_data.py
+
+# With pip:
+python tests/generate_sample_data.py
 ```
 
 This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
