@@ -243,21 +243,35 @@ class HistogramWidget(QWidget):
             margin_left, margin_top + height
         )
         
+        # Draw y-axis tick at the top showing max count
+        painter.drawLine(
+            margin_left - 3, margin_top,
+            margin_left + 3, margin_top
+        )
+        
         # Draw x-axis labels
         painter.setPen(TEXT_COLOR)
         font = QFont()
         font.setPointSize(7)
         painter.setFont(font)
         
+        # Label for y-axis max (at the top)
+        painter.drawText(
+            margin_left - 25, margin_top + 5,
+            f"{max_count}"
+        )
+        
         # Label at start (0)
+        # Note: Multiply by 100 to convert from decimal to more readable scale
         painter.drawText(
             margin_left - 5, margin_top + height + 15,
             "0"
         )
         
         # Label at end (95th percentile value)
+        # Note: Multiply by 100 to convert from decimal to more readable scale
         if self.bin_edges is not None and len(self.bin_edges) > 0:
-            max_label = f"{self.bin_edges[-1]:.2f}"
+            max_label = f"{self.bin_edges[-1] * 100:.1f}"
             painter.drawText(
                 margin_left + width - 20, margin_top + height + 15,
                 max_label
