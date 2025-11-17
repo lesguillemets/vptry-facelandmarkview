@@ -16,6 +16,7 @@ from vptry_facelandmarkview.constants import (
     DEFAULT_ALIGNMENT_LANDMARKS,
     ProjectionType,
     PROJECTION_VIEWPORT_FILL,
+    PROJECTION_Z_SCALE,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -221,11 +222,11 @@ class ProjectionWidget(QOpenGLWidget):
             scaled_point = (point - self.center) * self.scale
             
             if self.projection_type == ProjectionType.XZ:
-                # X-Z projection (top view) - x horizontal, z vertical (negated)
-                x, z = scaled_point[0], -scaled_point[2]
+                # X-Z projection (top view) - x horizontal, z vertical (negated) with additional z-scale
+                x, z = scaled_point[0], -scaled_point[2] * PROJECTION_Z_SCALE
             elif self.projection_type == ProjectionType.YZ:
-                # Y-Z projection (side view) - z horizontal, y vertical (negated, top is -y)
-                x, z = scaled_point[2], -scaled_point[1]
+                # Y-Z projection (side view) - z horizontal with additional z-scale, y vertical (negated, top is -y)
+                x, z = scaled_point[2] * PROJECTION_Z_SCALE, -scaled_point[1]
             else:  # xy
                 # X-Y projection (not used currently)
                 x, z = scaled_point[0], -scaled_point[1]
@@ -250,13 +251,13 @@ class ProjectionWidget(QOpenGLWidget):
             scaled_curr = (curr_pt - self.center) * self.scale
             
             if self.projection_type == ProjectionType.XZ:
-                # X-Z projection - x horizontal, z vertical (negated)
-                base_x, base_z = scaled_base[0], -scaled_base[2]
-                curr_x, curr_z = scaled_curr[0], -scaled_curr[2]
+                # X-Z projection - x horizontal, z vertical (negated) with additional z-scale
+                base_x, base_z = scaled_base[0], -scaled_base[2] * PROJECTION_Z_SCALE
+                curr_x, curr_z = scaled_curr[0], -scaled_curr[2] * PROJECTION_Z_SCALE
             elif self.projection_type == ProjectionType.YZ:
-                # Y-Z projection - z horizontal, y vertical (negated, top is -y)
-                base_x, base_z = scaled_base[2], -scaled_base[1]
-                curr_x, curr_z = scaled_curr[2], -scaled_curr[1]
+                # Y-Z projection - z horizontal with additional z-scale, y vertical (negated, top is -y)
+                base_x, base_z = scaled_base[2] * PROJECTION_Z_SCALE, -scaled_base[1]
+                curr_x, curr_z = scaled_curr[2] * PROJECTION_Z_SCALE, -scaled_curr[1]
             else:  # xy
                 base_x, base_z = scaled_base[0], -scaled_base[1]
                 curr_x, curr_z = scaled_curr[0], -scaled_curr[1]
