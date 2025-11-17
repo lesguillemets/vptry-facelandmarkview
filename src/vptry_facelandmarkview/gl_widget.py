@@ -23,6 +23,7 @@ from vptry_facelandmarkview.constants import (
     AXIS_X_COLOR,
     AXIS_Y_COLOR,
     AXIS_Z_COLOR,
+    DisplayState,
 )
 from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
@@ -40,11 +41,7 @@ class LandmarkGLWidget(QOpenGLWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.data: Optional[npt.NDArray[np.float64]] = None
-        self.base_frame: int = 0
-        self.current_frame: int = 0
-        self.show_vectors: bool = False
-        self.align_faces: bool = False
-        self.use_static_points: bool = False
+        self.state = DisplayState()
 
         # Camera controls
         self.rotation_x: float = 20.0
@@ -61,31 +58,31 @@ class LandmarkGLWidget(QOpenGLWidget):
     def set_base_frame(self, frame: int) -> None:
         """Set the base frame"""
         logger.debug(f"Setting base frame to: {frame}")
-        self.base_frame = frame
+        self.state.base_frame = frame
         self.update()
 
     def set_current_frame(self, frame: int) -> None:
         """Set the current frame"""
         logger.debug(f"Setting current frame to: {frame}")
-        self.current_frame = frame
+        self.state.current_frame = frame
         self.update()
 
     def set_show_vectors(self, show: bool) -> None:
         """Set whether to show vectors"""
         logger.debug(f"Setting show_vectors to: {show}")
-        self.show_vectors = show
+        self.state.show_vectors = show
         self.update()
 
     def set_align_faces(self, align: bool) -> None:
         """Set whether to align faces to base frame"""
         logger.debug(f"Setting align_faces to: {align}")
-        self.align_faces = align
+        self.state.align_faces = align
         self.update()
 
     def set_use_static_points(self, use_static: bool) -> None:
         """Set whether to use only static points for alignment"""
         logger.debug(f"Setting use_static_points to: {use_static}")
-        self.use_static_points = use_static
+        self.state.use_static_points = use_static
         self.update()
 
     def initializeGL(self) -> None:
@@ -130,9 +127,11 @@ class LandmarkGLWidget(QOpenGLWidget):
             return
 
         # Get landmark data
-        base_landmarks = self.data[self.base_frame]
-        current_landmarks = self.data[self.current_frame]
-        logger.info(f"Rendering frame {self.current_frame} (base: {self.base_frame})")
+        base_landmarks = self.data[self.state.base_frame]
+        current_landmarks = self.data[self.state.current_frame]
+        logger.info(
+            f"Rendering frame {self.state.current_frame} (base: {self.state.base_frame})"
+        )
         logger.debug(
             f"Base landmarks shape: {base_landmarks.shape}, Current landmarks shape: {current_landmarks.shape}"
         )
@@ -172,10 +171,10 @@ class LandmarkGLWidget(QOpenGLWidget):
 
         # Create alignment function if enabled
         alignment_fn = None
-        if self.align_faces and len(current_landmarks_valid) > 0:
+        if self.state.align_faces and len(current_landmarks_valid) > 0:
             # Determine which landmarks to use for alignment
             alignment_indices = None
-            if self.use_static_points:
+            if self.state.use_static_points:
                 # Use only nose + forehead landmarks for stable alignment
                 alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
                 logger.debug(
@@ -200,17 +199,17 @@ class LandmarkGLWidget(QOpenGLWidget):
         )
 
         # Draw vectors if enabled (only for landmarks that are valid in both frames)
-        if self.show_vectors and len(current_landmarks_valid) > 0:
+        if self.state.show_vectors and len(current_landmarks_valid) > 0:
             # Match valid landmarks from both frames
             both_valid_mask = base_valid_mask & current_valid_mask
             base_landmarks_both = base_landmarks[both_valid_mask]
             current_landmarks_both = current_landmarks[both_valid_mask]
 
             # Apply alignment to current landmarks if enabled
-            if self.align_faces and len(current_landmarks_both) > 0:
+            if self.state.align_faces and len(current_landmarks_both) > 0:
                 # Use same alignment indices for vectors
                 vector_alignment_indices = (
-                    DEFAULT_ALIGNMENT_LANDMARKS if self.use_static_points else None
+                    DEFAULT_ALIGNMENT_LANDMARKS if self.state.use_static_points else None
                 )
                 current_landmarks_both = align_landmarks_to_base(
                     current_landmarks_both,

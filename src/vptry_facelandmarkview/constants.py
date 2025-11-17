@@ -2,6 +2,7 @@
 Constants used throughout the Face Landmark Viewer application.
 """
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import NamedTuple
 
@@ -45,6 +46,17 @@ class ProjectionType(Enum):
     XY = "xy"
     XZ = "xz"
     YZ = "yz"
+
+
+@dataclass
+class DisplayState:
+    """State for controlling landmark display across widgets"""
+
+    base_frame: int = 0
+    current_frame: int = 0
+    show_vectors: bool = False
+    align_faces: bool = False
+    use_static_points: bool = False
 
 
 # Landmark indices for alignment using stable facial features
