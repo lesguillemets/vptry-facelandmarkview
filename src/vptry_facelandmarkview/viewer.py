@@ -25,6 +25,7 @@ from PySide6.QtCore import Qt
 
 from vptry_facelandmarkview.gl_widget import LandmarkGLWidget
 from vptry_facelandmarkview.projection_widget import ProjectionWidget
+from vptry_facelandmarkview.histogram_widget import HistogramWidget
 from vptry_facelandmarkview.constants import ProjectionType, PROJECTION_SIZE_PX
 
 # UI text constants
@@ -149,11 +150,11 @@ class FaceLandmarkViewer(QMainWindow):
         self.xz_widget.setFixedHeight(PROJECTION_SIZE_PX)
         viz_grid.addWidget(self.xz_widget, 0, 0)
 
-        # Top-right corner - reserved for future use (row 0, column 1)
-        self.top_right_placeholder = QLabel()
-        self.top_right_placeholder.setFixedHeight(PROJECTION_SIZE_PX)
-        self.top_right_placeholder.setFixedWidth(PROJECTION_SIZE_PX)
-        viz_grid.addWidget(self.top_right_placeholder, 0, 1)
+        # Top-right corner - histogram of distances (row 0, column 1)
+        self.histogram_widget = HistogramWidget()
+        self.histogram_widget.setFixedHeight(PROJECTION_SIZE_PX)
+        self.histogram_widget.setFixedWidth(PROJECTION_SIZE_PX)
+        viz_grid.addWidget(self.histogram_widget, 0, 1)
 
         # Main 3D OpenGL widget (row 1, column 0)
         self.gl_widget = LandmarkGLWidget()
@@ -186,7 +187,7 @@ class FaceLandmarkViewer(QMainWindow):
         Args:
             update_fn: Function that takes a widget and performs the update
         """
-        for widget in [self.gl_widget, self.xz_widget, self.yz_widget]:
+        for widget in [self.gl_widget, self.xz_widget, self.yz_widget, self.histogram_widget]:
             update_fn(widget)
 
     def _handle_checkbox_change(
