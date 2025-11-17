@@ -8,16 +8,22 @@ POINT_SIZE = 2.0
 SCALE_MARGIN = 1.2  # 20% margin for scaling
 
 # Projection widget constants
-PROJECTION_SIZE_PX = 100  # Fixed size for projection plots (width for y-z, height for x-z)
+PROJECTION_SIZE_PX = (
+    100  # Fixed size for projection plots (width for y-z, height for x-z)
+)
 PROJECTION_VIEWPORT_FILL = 0.8  # Landmarks should span 80% of the viewport
-PROJECTION_Z_SCALE = 1.5  # Additional scaling factor for z-axis to enhance depth visibility
+PROJECTION_Z_SCALE = (
+    1.5  # Additional scaling factor for z-axis to enhance depth visibility
+)
 
 
 class ProjectionType(Enum):
     """Enum for projection types"""
+
     XY = "xy"
     XZ = "xz"
     YZ = "yz"
+
 
 # Landmark indices for alignment using stable facial features
 # These indices correspond to MediaPipe Face Landmarker landmarks

@@ -61,27 +61,27 @@ def test_layout_stretch_factors():
     viz_grid = viz_grid_item.layout()
     assert isinstance(viz_grid, QGridLayout), "viz_grid should be a QGridLayout"
     print("  ✓ viz_grid is a QGridLayout")
-    
+
     # Check that viz_grid has 4 widgets (xz, placeholder, main, yz)
     grid_item_count = viz_grid.count()
     assert grid_item_count == 4, f"Expected 4 items in viz_grid, got {grid_item_count}"
     print("  ✓ viz_grid has 4 widgets")
-    
+
     # Verify grid stretch factors
     row0_stretch = viz_grid.rowStretch(0)
     row1_stretch = viz_grid.rowStretch(1)
     col0_stretch = viz_grid.columnStretch(0)
     col1_stretch = viz_grid.columnStretch(1)
-    
+
     print(f"  ✓ Grid row 0 (x-z) stretch: {row0_stretch}")
     assert row0_stretch == 0, f"Grid row 0 should have stretch 0, got {row0_stretch}"
-    
+
     print(f"  ✓ Grid row 1 (main+yz) stretch: {row1_stretch}")
     assert row1_stretch == 1, f"Grid row 1 should have stretch 1, got {row1_stretch}"
-    
+
     print(f"  ✓ Grid column 0 (x-z+main) stretch: {col0_stretch}")
     assert col0_stretch == 1, f"Grid column 0 should have stretch 1, got {col0_stretch}"
-    
+
     print(f"  ✓ Grid column 1 (yz+placeholder) stretch: {col1_stretch}")
     assert col1_stretch == 0, f"Grid column 1 should have stretch 0, got {col1_stretch}"
 

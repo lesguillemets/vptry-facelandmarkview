@@ -30,13 +30,13 @@ class ProjectionWidget(QOpenGLWidget):
     """OpenGL widget for rendering 2D projections of landmarks"""
 
     def __init__(
-        self, 
+        self,
         projection_type: ProjectionType = ProjectionType.XY,
-        parent: Optional[QWidget] = None
+        parent: Optional[QWidget] = None,
     ) -> None:
         """
         Initialize projection widget
-        
+
         Args:
             projection_type: Type of projection (ProjectionType enum)
             parent: Parent widget
@@ -49,51 +49,61 @@ class ProjectionWidget(QOpenGLWidget):
         self.show_vectors: bool = False
         self.align_faces: bool = False
         self.use_static_points: bool = False
-        
+
         # Store shared center and scale from main widget
         self.center: Optional[npt.NDArray[np.float64]] = None
         self.scale: Optional[float] = None
 
     def set_data(self, data: npt.NDArray[np.float64]) -> None:
         """Set the landmark data"""
-        logger.debug(f"{self.projection_type} projection: Setting data with shape: {data.shape}")
+        logger.debug(
+            f"{self.projection_type} projection: Setting data with shape: {data.shape}"
+        )
         self.data = data
         self.update()
 
     def set_base_frame(self, frame: int) -> None:
         """Set the base frame"""
-        logger.debug(f"{self.projection_type} projection: Setting base frame to: {frame}")
+        logger.debug(
+            f"{self.projection_type} projection: Setting base frame to: {frame}"
+        )
         self.base_frame = frame
         self.update()
 
     def set_current_frame(self, frame: int) -> None:
         """Set the current frame"""
-        logger.debug(f"{self.projection_type} projection: Setting current frame to: {frame}")
+        logger.debug(
+            f"{self.projection_type} projection: Setting current frame to: {frame}"
+        )
         self.current_frame = frame
         self.update()
 
     def set_show_vectors(self, show: bool) -> None:
         """Set whether to show vectors"""
-        logger.debug(f"{self.projection_type} projection: Setting show_vectors to: {show}")
+        logger.debug(
+            f"{self.projection_type} projection: Setting show_vectors to: {show}"
+        )
         self.show_vectors = show
         self.update()
 
     def set_align_faces(self, align: bool) -> None:
         """Set whether to align faces to base frame"""
-        logger.debug(f"{self.projection_type} projection: Setting align_faces to: {align}")
+        logger.debug(
+            f"{self.projection_type} projection: Setting align_faces to: {align}"
+        )
         self.align_faces = align
         self.update()
 
     def set_use_static_points(self, use_static: bool) -> None:
         """Set whether to use only static points for alignment"""
-        logger.debug(f"{self.projection_type} projection: Setting use_static_points to: {use_static}")
+        logger.debug(
+            f"{self.projection_type} projection: Setting use_static_points to: {use_static}"
+        )
         self.use_static_points = use_static
         self.update()
-    
+
     def set_center_and_scale(
-        self, 
-        center: npt.NDArray[np.float64], 
-        scale: float
+        self, center: npt.NDArray[np.float64], scale: float
     ) -> None:
         """Set the center and scale from the main widget"""
         self.center = center
@@ -102,7 +112,9 @@ class ProjectionWidget(QOpenGLWidget):
 
     def initializeGL(self) -> None:
         """Initialize OpenGL"""
-        logger.info(f"Initializing OpenGL context for {self.projection_type} projection")
+        logger.info(
+            f"Initializing OpenGL context for {self.projection_type} projection"
+        )
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
         gl.glEnable(gl.GL_POINT_SMOOTH)
@@ -113,17 +125,19 @@ class ProjectionWidget(QOpenGLWidget):
 
     def resizeGL(self, w: int, h: int) -> None:
         """Handle window resize"""
-        logger.debug(f"{self.projection_type} projection: Resize GL: width={w}, height={h}")
+        logger.debug(
+            f"{self.projection_type} projection: Resize GL: width={w}, height={h}"
+        )
         gl.glViewport(0, 0, w, h)
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
-        
+
         # Set up orthographic projection for 2D view
         # Scale to use configured percentage of axis span (data spans roughly from -1 to 1 after scaling)
         # Don't maintain aspect ratio - fill the available space to maximize landmark visibility
         view_range = 1.0 / PROJECTION_VIEWPORT_FILL
         gl.glOrtho(-view_range, view_range, -view_range, view_range, -1.0, 1.0)
-        
+
         gl.glMatrixMode(gl.GL_MODELVIEW)
 
     def paintGL(self) -> None:
@@ -147,7 +161,9 @@ class ProjectionWidget(QOpenGLWidget):
         )
 
         if len(base_landmarks_valid) == 0:
-            logger.error(f"{self.projection_type} projection: No valid base landmarks to render")
+            logger.error(
+                f"{self.projection_type} projection: No valid base landmarks to render"
+            )
             return
 
         # Draw base frame landmarks (blue)
@@ -161,7 +177,7 @@ class ProjectionWidget(QOpenGLWidget):
             alignment_indices = None
             if self.use_static_points:
                 alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
-            
+
             alignment_fn = partial(
                 align_landmarks_to_base,
                 base_landmarks=base_landmarks_valid,
@@ -212,15 +228,17 @@ class ProjectionWidget(QOpenGLWidget):
         if alignment_fn is not None:
             landmarks = alignment_fn(landmarks)
 
-        logger.debug(f"{self.projection_type} projection: Drawing {len(landmarks)} {label} landmarks")
+        logger.debug(
+            f"{self.projection_type} projection: Drawing {len(landmarks)} {label} landmarks"
+        )
         gl.glPointSize(2.0)
         gl.glColor4f(*color)
         gl.glBegin(gl.GL_POINTS)
-        
+
         for point in landmarks:
             # Project to 2D based on projection type
             scaled_point = (point - self.center) * self.scale
-            
+
             if self.projection_type == ProjectionType.XZ:
                 # X-Z projection (top view) - x horizontal, z vertical (negated) with additional z-scale
                 x, z = scaled_point[0], -scaled_point[2] * PROJECTION_Z_SCALE
@@ -230,9 +248,9 @@ class ProjectionWidget(QOpenGLWidget):
             else:  # xy
                 # X-Y projection (not used currently)
                 x, z = scaled_point[0], -scaled_point[1]
-            
+
             gl.glVertex2f(x, z)
-        
+
         gl.glEnd()
 
     def _draw_projection_vectors(
@@ -241,15 +259,17 @@ class ProjectionWidget(QOpenGLWidget):
         current_landmarks: npt.NDArray[np.float64],
     ) -> None:
         """Draw vectors as 2D projection"""
-        logger.debug(f"{self.projection_type} projection: Drawing {len(base_landmarks)} vectors (green)")
+        logger.debug(
+            f"{self.projection_type} projection: Drawing {len(base_landmarks)} vectors (green)"
+        )
         gl.glLineWidth(1.0)
         gl.glColor4f(0.0, 0.8, 0.0, 0.3)
         gl.glBegin(gl.GL_LINES)
-        
+
         for base_pt, curr_pt in zip(base_landmarks, current_landmarks):
             scaled_base = (base_pt - self.center) * self.scale
             scaled_curr = (curr_pt - self.center) * self.scale
-            
+
             if self.projection_type == ProjectionType.XZ:
                 # X-Z projection - x horizontal, z vertical (negated) with additional z-scale
                 base_x, base_z = scaled_base[0], -scaled_base[2] * PROJECTION_Z_SCALE
@@ -261,8 +281,8 @@ class ProjectionWidget(QOpenGLWidget):
             else:  # xy
                 base_x, base_z = scaled_base[0], -scaled_base[1]
                 curr_x, curr_z = scaled_curr[0], -scaled_curr[1]
-            
+
             gl.glVertex2f(base_x, base_z)
             gl.glVertex2f(curr_x, curr_z)
-        
+
         gl.glEnd()

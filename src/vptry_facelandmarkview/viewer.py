@@ -120,33 +120,35 @@ class FaceLandmarkViewer(QMainWindow):
         #   [x-z plot]     [empty/reserved]
         #   [3D main plot] [y-z plot]
         viz_grid = QGridLayout()
-        
+
         # X-Z projection (top view) - row 0, column 0
         self.xz_widget = ProjectionWidget(projection_type=ProjectionType.XZ)
         self.xz_widget.setFixedHeight(PROJECTION_SIZE_PX)
         viz_grid.addWidget(self.xz_widget, 0, 0)
-        
+
         # Top-right corner - reserved for future use (row 0, column 1)
         self.top_right_placeholder = QLabel()
         self.top_right_placeholder.setFixedHeight(PROJECTION_SIZE_PX)
         self.top_right_placeholder.setFixedWidth(PROJECTION_SIZE_PX)
         viz_grid.addWidget(self.top_right_placeholder, 0, 1)
-        
+
         # Main 3D OpenGL widget (row 1, column 0)
         self.gl_widget = LandmarkGLWidget()
         viz_grid.addWidget(self.gl_widget, 1, 0)
-        
+
         # Y-Z projection (side view) - row 1, column 1
         self.yz_widget = ProjectionWidget(projection_type=ProjectionType.YZ)
         self.yz_widget.setFixedWidth(PROJECTION_SIZE_PX)
         viz_grid.addWidget(self.yz_widget, 1, 1)
-        
+
         # Set stretch factors so main plot takes up most space
         viz_grid.setRowStretch(0, 0)  # Top row (x-z) doesn't stretch
         viz_grid.setRowStretch(1, 1)  # Bottom row (main + y-z) stretches
         viz_grid.setColumnStretch(0, 1)  # Left column (x-z + main) stretches
-        viz_grid.setColumnStretch(1, 0)  # Right column (y-z + placeholder) doesn't stretch
-        
+        viz_grid.setColumnStretch(
+            1, 0
+        )  # Right column (y-z + placeholder) doesn't stretch
+
         main_layout.addLayout(viz_grid, stretch=1)
 
         # Info label
@@ -172,7 +174,7 @@ class FaceLandmarkViewer(QMainWindow):
         # Ensure file_path is a Path object
         if isinstance(file_path, str):
             file_path = Path(file_path)
-        
+
         logger.info(f"Loading file: {file_path}")
         try:
             self.data = np.load(file_path)
@@ -234,7 +236,7 @@ class FaceLandmarkViewer(QMainWindow):
             self.gl_widget.set_data(self.data)
             self.xz_widget.set_data(self.data)
             self.yz_widget.set_data(self.data)
-            
+
             # Update projections with center and scale from main widget
             self._update_projection_center_scale()
 
@@ -293,19 +295,22 @@ class FaceLandmarkViewer(QMainWindow):
             self.gl_widget.set_use_static_points(self.use_static_points)
             self.xz_widget.set_use_static_points(self.use_static_points)
             self.yz_widget.set_use_static_points(self.use_static_points)
-    
+
     def _update_projection_center_scale(self) -> None:
         """Update projection widgets with center and scale from base frame"""
         if self.data is None:
             return
-        
+
         # Import here to avoid circular dependency
-        from vptry_facelandmarkview.utils import filter_nan_landmarks, calculate_center_and_scale
-        
+        from vptry_facelandmarkview.utils import (
+            filter_nan_landmarks,
+            calculate_center_and_scale,
+        )
+
         # Get base frame landmarks and calculate center/scale
         base_landmarks = self.data[self.base_frame]
         base_landmarks_valid, _ = filter_nan_landmarks(base_landmarks)
-        
+
         if len(base_landmarks_valid) > 0:
             center, scale = calculate_center_and_scale(base_landmarks_valid)
             self.xz_widget.set_center_and_scale(center, scale)

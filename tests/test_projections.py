@@ -22,18 +22,26 @@ def test_projection_widgets_exist():
     viewer = FaceLandmarkViewer()
 
     # Check that projection widgets exist
-    assert hasattr(viewer, 'xz_widget'), "xz_widget should exist"
-    assert hasattr(viewer, 'yz_widget'), "yz_widget should exist"
+    assert hasattr(viewer, "xz_widget"), "xz_widget should exist"
+    assert hasattr(viewer, "yz_widget"), "yz_widget should exist"
     print("  ✓ X-Z and Y-Z projection widgets exist")
 
     # Check that they are ProjectionWidget instances
-    assert isinstance(viewer.xz_widget, ProjectionWidget), "xz_widget should be ProjectionWidget"
-    assert isinstance(viewer.yz_widget, ProjectionWidget), "yz_widget should be ProjectionWidget"
+    assert isinstance(viewer.xz_widget, ProjectionWidget), (
+        "xz_widget should be ProjectionWidget"
+    )
+    assert isinstance(viewer.yz_widget, ProjectionWidget), (
+        "yz_widget should be ProjectionWidget"
+    )
     print("  ✓ Widgets are ProjectionWidget instances")
 
     # Check projection types
-    assert viewer.xz_widget.projection_type == ProjectionType.XZ, "xz_widget should have projection_type XZ"
-    assert viewer.yz_widget.projection_type == ProjectionType.YZ, "yz_widget should have projection_type YZ"
+    assert viewer.xz_widget.projection_type == ProjectionType.XZ, (
+        "xz_widget should have projection_type XZ"
+    )
+    assert viewer.yz_widget.projection_type == ProjectionType.YZ, (
+        "yz_widget should have projection_type YZ"
+    )
     print("  ✓ Widgets have correct projection types")
 
     return True
@@ -51,7 +59,7 @@ def test_projection_sync():
 
     # Create sample data
     sample_data = np.random.randn(10, 68, 3)
-    
+
     # Set data on viewer (which should update all widgets)
     viewer.data = sample_data
     viewer.gl_widget.set_data(sample_data)
@@ -95,9 +103,15 @@ def test_projection_sync():
 
     # Test static points sync
     viewer.on_use_static_points_changed(2)  # 2 = Checked
-    assert viewer.gl_widget.use_static_points is True, "Main widget should use static points"
-    assert viewer.xz_widget.use_static_points is True, "X-Z widget should use static points"
-    assert viewer.yz_widget.use_static_points is True, "Y-Z widget should use static points"
+    assert viewer.gl_widget.use_static_points is True, (
+        "Main widget should use static points"
+    )
+    assert viewer.xz_widget.use_static_points is True, (
+        "X-Z widget should use static points"
+    )
+    assert viewer.yz_widget.use_static_points is True, (
+        "Y-Z widget should use static points"
+    )
     print("  ✓ Static points setting syncs across all widgets")
 
     # Check that center and scale are shared
@@ -121,16 +135,24 @@ def test_widget_dimensions():
     viewer = FaceLandmarkViewer()
 
     # Check X-Z widget height
-    assert viewer.xz_widget.maximumHeight() == 100, "X-Z widget should have max height of 100px"
+    assert viewer.xz_widget.maximumHeight() == 100, (
+        "X-Z widget should have max height of 100px"
+    )
     print("  ✓ X-Z widget has fixed height (max: 100px)")
 
     # Check Y-Z widget width
-    assert viewer.yz_widget.maximumWidth() == 100, "Y-Z widget should have max width of 100px"
+    assert viewer.yz_widget.maximumWidth() == 100, (
+        "Y-Z widget should have max width of 100px"
+    )
     print("  ✓ Y-Z widget has fixed width (max: 100px)")
 
     # Check placeholder dimensions
-    assert viewer.top_right_placeholder.maximumHeight() == 100, "Placeholder should have max height of 100px"
-    assert viewer.top_right_placeholder.maximumWidth() == 100, "Placeholder should have max width of 100px"
+    assert viewer.top_right_placeholder.maximumHeight() == 100, (
+        "Placeholder should have max height of 100px"
+    )
+    assert viewer.top_right_placeholder.maximumWidth() == 100, (
+        "Placeholder should have max width of 100px"
+    )
     print("  ✓ Top-right placeholder has correct dimensions (100x100px)")
 
     return True
@@ -146,14 +168,14 @@ def main():
     try:
         if not test_projection_widgets_exist():
             return 1
-        
+
         print()
-        
+
         if not test_projection_sync():
             return 1
-        
+
         print()
-        
+
         if not test_widget_dimensions():
             return 1
 
