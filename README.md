@@ -14,7 +14,7 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.12+
 - PySide6
 - NumPy
 - PyOpenGL
@@ -22,47 +22,50 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 
 ## Installation
 
+First, install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you haven't already.
+
+Then, the first time you run the application with `uv run`, it will automatically sync dependencies. Alternatively, you can manually sync:
 ```bash
-pip install -e .
+uv sync
 ```
 
-Or install from requirements.txt:
+For development with additional tools (linters, type checkers):
 ```bash
-pip install -r requirements.txt
+uv sync --all-groups
 ```
 
 ## Usage
 
 ### Running the Application
 
-**Using the installed command:**
+**Using uv run:**
 ```bash
-facelandmarkview
+uv run facelandmarkview
 ```
 
-**Or using Python module:**
+**Or using the Python module:**
 ```bash
-python -m vptry_facelandmarkview.main
+uv run python -m vptry_facelandmarkview.main
 ```
 
 **Or using backward compatibility wrapper:**
 ```bash
-python facelandmarkview.py
+uv run python facelandmarkview.py
 ```
 
 **Load a file directly from command line:**
 ```bash
-facelandmarkview sample_landmarks.npy
+uv run facelandmarkview sample_landmarks.npy
 ```
 
 **Load a file with a specific base frame:**
 ```bash
-facelandmarkview sample_landmarks.npy --base-frame 10
+uv run facelandmarkview sample_landmarks.npy --base-frame 10
 ```
 
 **View help and options:**
 ```bash
-facelandmarkview --help
+uv run facelandmarkview --help
 ```
 
 ### Data Format
@@ -82,7 +85,7 @@ For each frame `fr` and landmark `p`:
 To generate sample data for testing:
 
 ```bash
-python tests/generate_sample_data.py
+uv run python tests/generate_sample_data.py
 ```
 
 This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
