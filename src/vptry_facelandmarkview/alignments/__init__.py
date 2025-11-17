@@ -13,6 +13,7 @@ from vptry_facelandmarkview.alignments.default import align_landmarks_default
 from vptry_facelandmarkview.alignments.scipy_procrustes import (
     align_landmarks_scipy_procrustes,
 )
+from vptry_facelandmarkview.alignments.anatomic0 import align_landmarks_anatomic0
 
 # Type alias for alignment function
 AlignmentFunction = Callable[
@@ -28,6 +29,7 @@ AlignmentFunction = Callable[
 ALIGNMENT_METHODS: dict[str, AlignmentFunction] = {
     "default": align_landmarks_default,
     "scipy procrustes": align_landmarks_scipy_procrustes,
+    "anatomic0": align_landmarks_anatomic0,
 }
 
 # Default alignment method
@@ -36,13 +38,13 @@ DEFAULT_ALIGNMENT_METHOD = "default"
 
 def get_alignment_method(name: str) -> AlignmentFunction:
     """Get alignment function by name
-    
+
     Args:
         name: Name of the alignment method
-        
+
     Returns:
         Alignment function
-        
+
     Raises:
         KeyError: If alignment method not found
     """
@@ -51,7 +53,7 @@ def get_alignment_method(name: str) -> AlignmentFunction:
 
 def get_available_alignment_methods() -> list[str]:
     """Get list of available alignment method names
-    
+
     Returns:
         List of alignment method names
     """
@@ -66,4 +68,5 @@ __all__ = [
     "get_available_alignment_methods",
     "align_landmarks_default",
     "align_landmarks_scipy_procrustes",
+    "align_landmarks_anatomic0",
 ]

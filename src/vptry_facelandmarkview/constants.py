@@ -123,3 +123,12 @@ FOREHEAD_LANDMARKS = [
 
 # Combined stable landmarks for default alignment
 DEFAULT_ALIGNMENT_LANDMARKS = NOSE_LANDMARKS + FOREHEAD_LANDMARKS
+
+# Landmark pairs for anatomic0 alignment method
+# These pairs define midpoints used for stable anatomic alignment
+# Format: list of tuples where each tuple contains two landmark indices
+ANATOMIC0_MIDPOINT_PAIRS = [
+    (33, 133),  # Eye region midpoint
+    (362, 263),  # Eye region midpoint
+    # Space for additional midpoint pairs in the future
+]
