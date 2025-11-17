@@ -15,7 +15,6 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 ## Requirements
 
 - Python 3.12+
-- [uv](https://docs.astral.sh/uv/) package manager
 - PySide6
 - NumPy
 - PyOpenGL
@@ -23,19 +22,9 @@ A PySide6-based 3D visualization tool for viewing face landmark data from .npy f
 
 ## Installation
 
-First, install uv if you haven't already:
-```bash
-# On macOS and Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
+First, install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you haven't already.
 
-# On Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Or via pip
-pip install uv
-```
-
-Then sync the project dependencies:
+Then, the first time you run the application with `uv run`, it will automatically sync dependencies. Alternatively, you can manually sync:
 ```bash
 uv sync
 ```
