@@ -189,10 +189,10 @@ class HistogramWidget(QWidget):
             return
 
         # Define margins
-        margin_left = 10
+        margin_left = 30  # Space for y-axis tick label (a few characters)
         margin_right = 30  # Extra space for outlier bar
         margin_top = 10
-        margin_bottom = 25  # Space for x-axis labels
+        margin_bottom = 40  # Space for x-axis labels and mean/variance text
 
         width = self.width() - margin_left - margin_right
         height = self.height() - margin_top - margin_bottom
@@ -270,7 +270,20 @@ class HistogramWidget(QWidget):
             # Label for outliers if present
             if self.outlier_count > 0:
                 painter.setPen(OUTLIER_BAR_COLOR)
-                # painter.drawText(
-                #     margin_left + width + 5, margin_top + height + 15,
-                #     f">{OUTLIER_PERCENTILE}%"
-                # )
+                painter.drawText(
+                    margin_left + width + 5, margin_top + height + 15,
+                    f">{OUTLIER_PERCENTILE}%"
+                )
+        
+        # Draw mean and variance below the histogram
+        # Note: Display values before ×100 scaling
+        if self.distances is not None and len(self.distances) > 0:
+            mean_dist = self.distances.mean()
+            var_dist = self.distances.var()
+            
+            painter.setPen(TEXT_COLOR)
+            stats_text = f"Mean: {mean_dist:.4f}  Var: {var_dist:.6f}"
+            painter.drawText(
+                margin_left, margin_top + height + 30,
+                stats_text
+            )
