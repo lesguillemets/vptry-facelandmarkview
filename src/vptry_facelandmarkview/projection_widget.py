@@ -22,10 +22,7 @@ from vptry_facelandmarkview.constants import (
     VECTOR_COLOR,
     DisplayState,
 )
-from vptry_facelandmarkview.utils import (
-    filter_nan_landmarks,
-    align_landmarks_to_base,
-)
+from vptry_facelandmarkview.utils import filter_nan_landmarks
 
 logger = logging.getLogger(__name__)
 

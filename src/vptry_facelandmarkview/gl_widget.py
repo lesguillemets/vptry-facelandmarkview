@@ -44,7 +44,6 @@ from vptry_facelandmarkview.utils import (
     filter_nan_landmarks,
     calculate_center_and_scale,
     draw_landmarks,
-    align_landmarks_to_base,
 )
 
 logger = logging.getLogger(__name__)

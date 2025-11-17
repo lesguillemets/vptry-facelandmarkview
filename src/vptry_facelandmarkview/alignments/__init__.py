@@ -9,6 +9,11 @@ from typing import Callable, Optional
 import numpy as np
 import numpy.typing as npt
 
+from vptry_facelandmarkview.alignments.default import align_landmarks_default
+from vptry_facelandmarkview.alignments.scipy_procrustes import (
+    align_landmarks_scipy_procrustes,
+)
+
 # Type alias for alignment function
 AlignmentFunction = Callable[
     [
@@ -18,11 +23,6 @@ AlignmentFunction = Callable[
     ],
     npt.NDArray[np.float64],  # aligned landmarks
 ]
-
-from vptry_facelandmarkview.alignments.default import align_landmarks_default
-from vptry_facelandmarkview.alignments.scipy_procrustes import (
-    align_landmarks_scipy_procrustes,
-)
 
 # Registry of available alignment methods
 ALIGNMENT_METHODS: dict[str, AlignmentFunction] = {

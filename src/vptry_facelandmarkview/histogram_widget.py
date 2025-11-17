@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QColor, QPen, QFont
 
 from vptry_facelandmarkview.constants import DEFAULT_ALIGNMENT_LANDMARKS
-from vptry_facelandmarkview.utils import filter_nan_landmarks, align_landmarks_to_base
+from vptry_facelandmarkview.utils import filter_nan_landmarks
 
 logger = logging.getLogger(__name__)
 
