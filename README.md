@@ -95,6 +95,9 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 - **Show Vectors**: Toggle visualization of vectors from base frame to current frame
 - **Align Faces**: Align current frame to base frame to remove head movement (translation and rotation), making facial expression changes easier to see
 - **Limit to Static Points**: When enabled with "Align Faces", uses only stable facial landmarks (nose and forehead, 30 points total) for computing alignment. This provides more robust alignment when expressions vary significantly, as it focuses on features that don't move with expressions.
+- **Alignment Method**: Choose between different alignment algorithms:
+  - **default**: Our custom Procrustes alignment using Kabsch algorithm (rigid transformation: rotation + translation only)
+  - **scipy procrustes**: SciPy's implementation that includes scaling in addition to rotation and translation
 - **Frame Slider**: Navigate through frames to see animation
 
 ### Mouse Controls
@@ -110,13 +113,21 @@ This creates `sample_landmarks.npy` with 50 frames and 68 landmarks.
 
 ### Face Alignment
 
-The "Align Faces" feature removes the effects of head movement (translation and rotation) to make facial expression changes more visible. When enabled:
+The "Align Faces" feature removes the effects of head movement to make facial expression changes more visible. When enabled:
 
-- The current frame landmarks are aligned to the base frame using Procrustes alignment (Kabsch algorithm)
-- This computes the optimal rigid transformation (rotation + translation) that best matches the two point sets
+- The current frame landmarks are aligned to the base frame using the selected alignment method
+- This computes the optimal transformation that best matches the two point sets
 - Head position and orientation differences are removed
 - Facial expression changes (relative movements of landmarks) are preserved
 - Useful for analyzing subtle facial expressions without distraction from head movement
+
+#### Alignment Methods
+
+The application supports multiple alignment algorithms that you can choose from:
+
+- **default**: Our custom implementation of Procrustes alignment using the Kabsch algorithm. This performs a rigid transformation (rotation + translation only) to align landmarks. This is best when you want to preserve the relative scale of facial features.
+
+- **scipy procrustes**: Uses SciPy's `spatial.procrustes` function, which includes scaling in addition to rotation and translation. This can be useful when comparing faces of different sizes or when scale variations should be normalized.
 
 #### Static Points for Robust Alignment
 
@@ -130,16 +141,28 @@ Enable "Limit to Static Points" in the UI to use these stable landmarks for alig
 - You want to focus on expression changes in the mouth or eye areas
 - The full face alignment is affected by expression-related movements
 
-#### Programmatic Usage with Specific Landmarks
+#### Programmatic Usage with Specific Landmarks and Methods
 
-The alignment function can be used programmatically with optional landmark selection:
+The alignment functions can be used programmatically with optional landmark selection and different methods:
 
 ```python
 from vptry_facelandmarkview.utils import align_landmarks_to_base
 from vptry_facelandmarkview.constants import DEFAULT_ALIGNMENT_LANDMARKS
+from vptry_facelandmarkview.alignments import (
+    get_alignment_method,
+    get_available_alignment_methods,
+)
 
-# Align using all landmarks
+# Using the backward-compatible wrapper (default method)
 aligned = align_landmarks_to_base(current_landmarks, base_landmarks)
+
+# Using a specific alignment method directly
+align_func = get_alignment_method("scipy procrustes")
+aligned = align_func(current_landmarks, base_landmarks)
+
+# List all available alignment methods
+methods = get_available_alignment_methods()
+print(f"Available methods: {methods}")  # ['default', 'scipy procrustes']
 
 # Align using preset static points (nose + forehead)
 aligned = align_landmarks_to_base(
@@ -148,9 +171,10 @@ aligned = align_landmarks_to_base(
     alignment_indices=DEFAULT_ALIGNMENT_LANDMARKS
 )
 
-# Align using custom landmark indices
+# Align using custom landmark indices with scipy method
 alignment_indices = [0, 1, 2, 5, 10]  # or a set: {0, 1, 2, 5, 10}
-aligned = align_landmarks_to_base(
+scipy_align = get_alignment_method("scipy procrustes")
+aligned = scipy_align(
     current_landmarks, 
     base_landmarks, 
     alignment_indices=alignment_indices
@@ -165,12 +189,18 @@ The project follows a modular src-layout structure:
 
 ```
 src/vptry_facelandmarkview/
-├── __init__.py          # Package initialization and exports
-├── constants.py         # Application constants
-├── utils.py             # Utility functions for landmark processing
-├── gl_widget.py         # OpenGL widget for 3D rendering
-├── viewer.py            # Main window and UI components
-└── main.py              # Application entry point
+├── __init__.py               # Package initialization and exports
+├── constants.py              # Application constants
+├── utils.py                  # Utility functions for landmark processing
+├── gl_widget.py              # OpenGL widget for 3D rendering
+├── projection_widget.py      # 2D projection widgets (top and side views)
+├── histogram_widget.py       # Histogram widget for distance visualization
+├── viewer.py                 # Main window and UI components
+├── main.py                   # Application entry point
+└── alignments/               # Alignment methods module
+    ├── __init__.py           # Alignment registry and exports
+    ├── default.py            # Default Kabsch/Procrustes alignment
+    └── scipy_procrustes.py   # SciPy procrustes alignment
 ```
 
 The old `facelandmarkview.py` is maintained as a backward compatibility wrapper that imports from the new package structure.

@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QCheckBox,
     QSpinBox,
+    QComboBox,
 )
 from PySide6.QtCore import Qt
 
@@ -33,6 +34,7 @@ WINDOW_TITLE = "Face Landmark Viewer (OpenGL)"
 LOAD_BUTTON_TEXT = "Load .npy File"
 BASE_FRAME_LABEL = "Base Frame:"
 FRAME_LABEL = "Frame:"
+ALIGNMENT_METHOD_LABEL = "Alignment Method:"
 SHOW_VECTORS_TEXT = "Show Vectors"
 ALIGN_FACES_TEXT = "Align Faces"
 LIMIT_STATIC_POINTS_TEXT = "Limit to Static Points"
@@ -54,6 +56,7 @@ class VisualizationWidget(Protocol):
     def set_show_vectors(self, show: bool) -> None: ...
     def set_align_faces(self, align: bool) -> None: ...
     def set_use_static_points(self, use_static: bool) -> None: ...
+    def set_alignment_method(self, method: str) -> None: ...
 
 
 class FaceLandmarkViewer(QMainWindow):
@@ -69,6 +72,7 @@ class FaceLandmarkViewer(QMainWindow):
         self.show_vectors: bool = False
         self.align_faces: bool = False
         self.use_static_points: bool = False
+        self.alignment_method: str = "default"
         self.initial_file: Optional[Path] = initial_file
 
         self.setWindowTitle(WINDOW_TITLE)
@@ -119,6 +123,19 @@ class FaceLandmarkViewer(QMainWindow):
             self.on_use_static_points_changed
         )
         control_layout.addWidget(self.use_static_points_checkbox)
+
+        # Alignment method dropdown
+        control_layout.addWidget(QLabel(ALIGNMENT_METHOD_LABEL))
+        self.alignment_method_combo = QComboBox()
+        # Import alignment methods
+        from vptry_facelandmarkview.alignments import get_available_alignment_methods
+
+        for method in get_available_alignment_methods():
+            self.alignment_method_combo.addItem(method)
+        self.alignment_method_combo.currentTextChanged.connect(
+            self.on_alignment_method_changed
+        )
+        control_layout.addWidget(self.alignment_method_combo)
 
         control_layout.addStretch()
 
@@ -336,6 +353,13 @@ class FaceLandmarkViewer(QMainWindow):
         self._handle_checkbox_change(
             state, "use_static_points", lambda w, v: w.set_use_static_points(v)
         )
+
+    def on_alignment_method_changed(self, method: str) -> None:
+        """Handle alignment method dropdown change"""
+        self.alignment_method = method
+        logger.debug(f"Alignment method changed to: {method}")
+        if self.data is not None:
+            self._update_all_widgets(lambda w: w.set_alignment_method(method))
 
     def _update_projection_center_scale(self) -> None:
         """Update projection widgets with center and scale from base frame"""
