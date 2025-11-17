@@ -36,7 +36,9 @@ FRAME_LABEL = "Frame:"
 SHOW_VECTORS_TEXT = "Show Vectors"
 ALIGN_FACES_TEXT = "Align Faces"
 LIMIT_STATIC_POINTS_TEXT = "Limit to Static Points"
-INITIAL_INFO_TEXT = "Load a .npy file to begin. Use mouse to rotate (drag) and zoom (wheel)."
+INITIAL_INFO_TEXT = (
+    "Load a .npy file to begin. Use mouse to rotate (drag) and zoom (wheel)."
+)
 FILE_DIALOG_TITLE = "Open .npy File"
 FILE_DIALOG_FILTER = "NumPy Files (*.npy);;All Files (*)"
 
@@ -183,11 +185,16 @@ class FaceLandmarkViewer(QMainWindow):
         self, update_fn: Callable[[VisualizationWidget], None]
     ) -> None:
         """Call the same update function on all visualization widgets
-        
+
         Args:
             update_fn: Function that takes a widget and performs the update
         """
-        for widget in [self.gl_widget, self.xz_widget, self.yz_widget, self.histogram_widget]:
+        for widget in [
+            self.gl_widget,
+            self.xz_widget,
+            self.yz_widget,
+            self.histogram_widget,
+        ]:
             update_fn(widget)
 
     def _handle_checkbox_change(
@@ -197,7 +204,7 @@ class FaceLandmarkViewer(QMainWindow):
         setter_fn: Callable[[VisualizationWidget, bool], None],
     ) -> None:
         """Handle checkbox state change and update widgets
-        
+
         Args:
             state: Qt.CheckState value (0=Unchecked, 2=Checked)
             attr_name: Name of the instance attribute to update

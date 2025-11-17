@@ -180,9 +180,7 @@ class LandmarkGLWidget(QOpenGLWidget):
         )
 
         # Draw base frame landmarks (blue)
-        draw_landmarks(
-            base_landmarks_valid, center, scale, BASE_LANDMARK_COLOR, "base"
-        )
+        draw_landmarks(base_landmarks_valid, center, scale, BASE_LANDMARK_COLOR, "base")
 
         # Create alignment function if enabled
         alignment_fn = None
@@ -224,7 +222,9 @@ class LandmarkGLWidget(QOpenGLWidget):
             if self.state.align_faces and len(current_landmarks_both) > 0:
                 # Use same alignment indices for vectors
                 vector_alignment_indices = (
-                    DEFAULT_ALIGNMENT_LANDMARKS if self.state.use_static_points else None
+                    DEFAULT_ALIGNMENT_LANDMARKS
+                    if self.state.use_static_points
+                    else None
                 )
                 current_landmarks_both = align_landmarks_to_base(
                     current_landmarks_both,

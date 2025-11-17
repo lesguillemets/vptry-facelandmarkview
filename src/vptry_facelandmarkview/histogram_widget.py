@@ -37,14 +37,14 @@ class HistogramWidget(QWidget):
         self.current_frame: int = 0
         self.align_faces: bool = False
         self.use_static_points: bool = False
-        
+
         # Cached histogram data
         self.distances: Optional[npt.NDArray[np.float64]] = None
         self.hist_values: Optional[npt.NDArray[np.int_]] = None
         self.bin_edges: Optional[npt.NDArray[np.float64]] = None
         self.outlier_count: int = 0
         self.max_distance: float = 0.0
-        
+
         self.setMinimumSize(100, 100)
 
     def set_data(self, data: npt.NDArray[np.float64]) -> None:
@@ -88,51 +88,55 @@ class HistogramWidget(QWidget):
 
     def _calculate_distances(self) -> Optional[npt.NDArray[np.float64]]:
         """Calculate Euclidean distances between base and current frame landmarks
-        
+
         Returns:
             Array of distances for valid landmarks, or None if no valid data
         """
         if self.data is None:
             return None
-            
+
         base_landmarks = self.data[self.base_frame]
         current_landmarks = self.data[self.current_frame]
-        
+
         # Filter out NaN values
         base_landmarks_valid, base_valid_mask = filter_nan_landmarks(base_landmarks)
-        current_landmarks_valid, current_valid_mask = filter_nan_landmarks(current_landmarks)
-        
+        current_landmarks_valid, current_valid_mask = filter_nan_landmarks(
+            current_landmarks
+        )
+
         # Get landmarks that are valid in both frames
         both_valid_mask = base_valid_mask & current_valid_mask
         base_landmarks_both = base_landmarks[both_valid_mask]
         current_landmarks_both = current_landmarks[both_valid_mask]
-        
+
         if len(base_landmarks_both) == 0:
             logger.warning("No valid landmarks to calculate distances")
             return None
-        
+
         # Apply alignment if enabled
         if self.align_faces:
             alignment_indices = None
             if self.use_static_points:
                 alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
-            
+
             current_landmarks_both = align_landmarks_to_base(
                 current_landmarks_both,
                 base_landmarks_both,
                 alignment_indices=alignment_indices,
             )
-        
+
         # Calculate Euclidean distances
         distances = np.linalg.norm(current_landmarks_both - base_landmarks_both, axis=1)
-        logger.debug(f"Calculated {len(distances)} distances, range: [{distances.min():.4f}, {distances.max():.4f}]")
-        
+        logger.debug(
+            f"Calculated {len(distances)} distances, range: [{distances.min():.4f}, {distances.max():.4f}]"
+        )
+
         return distances
 
     def _update_histogram(self) -> None:
         """Update histogram data based on current state"""
         distances = self._calculate_distances()
-        
+
         if distances is None or len(distances) == 0:
             self.distances = None
             self.hist_values = None
@@ -140,30 +144,30 @@ class HistogramWidget(QWidget):
             self.outlier_count = 0
             self.max_distance = 0.0
             return
-        
+
         self.distances = distances
         self.max_distance = distances.max()
-        
+
         # Calculate the 95th percentile for the histogram range
         percentile_95 = np.percentile(distances, OUTLIER_PERCENTILE)
-        
+
         # Count outliers (values above 95th percentile)
         outlier_mask = distances > percentile_95
         self.outlier_count = outlier_mask.sum()
-        
+
         # Create histogram for non-outliers
         non_outlier_distances = distances[~outlier_mask]
-        
+
         if len(non_outlier_distances) > 0:
             # Create histogram with bins from 0 to 95th percentile
             self.hist_values, self.bin_edges = np.histogram(
-                non_outlier_distances, 
-                bins=HISTOGRAM_BINS,
-                range=(0, percentile_95)
+                non_outlier_distances, bins=HISTOGRAM_BINS, range=(0, percentile_95)
             )
-            logger.debug(f"Histogram created: {len(non_outlier_distances)} values, "
-                        f"{self.outlier_count} outliers, "
-                        f"range: [0, {percentile_95:.4f}]")
+            logger.debug(
+                f"Histogram created: {len(non_outlier_distances)} values, "
+                f"{self.outlier_count} outliers, "
+                f"range: [0, {percentile_95:.4f}]"
+            )
         else:
             # All values are outliers (rare case)
             self.hist_values = np.zeros(HISTOGRAM_BINS, dtype=np.int_)

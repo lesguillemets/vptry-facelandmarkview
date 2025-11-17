@@ -85,10 +85,12 @@ def test_layout_stretch_factors():
 
     print(f"  ✓ Grid column 1 (yz+histogram) stretch: {col1_stretch}")
     assert col1_stretch == 0, f"Grid column 1 should have stretch 0, got {col1_stretch}"
-    
+
     # Verify histogram widget is present
     histogram_widget = viewer.histogram_widget
-    assert isinstance(histogram_widget, HistogramWidget), "Top-right should contain HistogramWidget"
+    assert isinstance(histogram_widget, HistogramWidget), (
+        "Top-right should contain HistogramWidget"
+    )
     print("  ✓ Histogram widget is present in top-right corner")
 
     print("  ✓ All stretch factors are correct!")

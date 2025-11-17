@@ -27,7 +27,6 @@ def test_package_imports():
 
     # Test utils can be imported (but not instantiated without Qt)
     try:
-
         print("✓ utils module imported")
         print(
             "  Functions: filter_nan_landmarks, calculate_center_and_scale, draw_landmarks"
