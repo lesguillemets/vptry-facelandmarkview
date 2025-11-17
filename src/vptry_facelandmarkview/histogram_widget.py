@@ -262,7 +262,7 @@ class HistogramWidget(QWidget):
         # Label at end (95th percentile value)
         # Note: Multiply by 100 to convert from decimal to more readable scale
         if self.bin_edges is not None and len(self.bin_edges) > 0:
-            max_label = f"{self.bin_edges[-1] * 100:.1f}"
+            max_label = f"{self.bin_edges[-1] * 100:.2f}"
             painter.drawText(
                 margin_left + width - 20, margin_top + height + 15, max_label
             )
@@ -271,19 +271,17 @@ class HistogramWidget(QWidget):
             if self.outlier_count > 0:
                 painter.setPen(OUTLIER_BAR_COLOR)
                 painter.drawText(
-                    margin_left + width + 5, margin_top + height + 15,
-                    f">{OUTLIER_PERCENTILE}%"
+                    margin_left + width + 5,
+                    margin_top + height + 15,
+                    f">{OUTLIER_PERCENTILE}%",
                 )
-        
+
         # Draw mean and variance below the histogram
         # Note: Display values before ×100 scaling
         if self.distances is not None and len(self.distances) > 0:
-            mean_dist = self.distances.mean()
-            var_dist = self.distances.var()
-            
+            mean_dist = (100 * self.distances).mean()
+            var_dist = (100 * self.distances).var()
+
             painter.setPen(TEXT_COLOR)
-            stats_text = f"Mean: {mean_dist:.4f}  Var: {var_dist:.6f}"
-            painter.drawText(
-                margin_left, margin_top + height + 30,
-                stats_text
-            )
+            stats_text = f"Mean: {mean_dist:.3f}  Var: {var_dist:.3f}"
+            painter.drawText(margin_left, margin_top + height + 30, stats_text)
