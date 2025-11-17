@@ -43,13 +43,13 @@ def create_demo_histogram(output_file="histogram_demo.png"):
     bar_width = (bin_edges[1] - bin_edges[0])
     bar_positions = bin_edges[:-1] + bar_width / 2
     
-    bars = ax.bar(bar_positions, hist_values, width=bar_width * 0.9,
+    ax.bar(bar_positions, hist_values, width=bar_width * 0.9,
                    color='gray', edgecolor='black', linewidth=0.5)
     
     # Add outlier bar at the end (in red)
     if outlier_count > 0:
         outlier_position = bin_edges[-1] + bar_width
-        outlier_bar = ax.bar(outlier_position, outlier_count, width=bar_width * 0.9,
+        ax.bar(outlier_position, outlier_count, width=bar_width * 0.9,
                              color='red', edgecolor='darkred', linewidth=0.5)
     
     # Set labels and title
@@ -65,7 +65,7 @@ def create_demo_histogram(output_file="histogram_demo.png"):
     
     # Add x-axis labels
     ax.set_xticks([0, percentile_95, outlier_position if outlier_count > 0 else bin_edges[-1]])
-    ax.set_xticklabels(['0', f'{percentile_95:.2f}', f'>95%' if outlier_count > 0 else ''], fontsize=8)
+    ax.set_xticklabels(['0', f'{percentile_95:.2f}', '>95%' if outlier_count > 0 else ''], fontsize=8)
     
     # Add text annotations
     ax.text(0.98, 0.98, f'Total points: {len(all_distances)}',
@@ -82,7 +82,7 @@ def create_demo_histogram(output_file="histogram_demo.png"):
     print(f"Demo histogram saved to: {output_file}")
     
     # Print statistics
-    print(f"\nStatistics:")
+    print("\nStatistics:")
     print(f"  Total landmarks: {len(all_distances)}")
     print(f"  Distance range: [{all_distances.min():.4f}, {all_distances.max():.4f}]")
     print(f"  95th percentile: {percentile_95:.4f}")
@@ -149,7 +149,7 @@ def create_comparison_demo(output_file="histogram_comparison_demo.png"):
     plt.savefig(output_file, dpi=150, bbox_inches='tight')
     print(f"\nComparison demo saved to: {output_file}")
     
-    print(f"\nComparison Statistics:")
+    print("\nComparison Statistics:")
     print(f"  Before alignment - Mean: {before_distances.mean():.4f}, Median: {np.median(before_distances):.4f}")
     print(f"  After alignment  - Mean: {after_distances.mean():.4f}, Median: {np.median(after_distances):.4f}")
     print(f"  Reduction: {(1 - after_distances.mean() / before_distances.mean()) * 100:.1f}%")

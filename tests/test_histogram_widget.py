@@ -113,7 +113,7 @@ def test_histogram_with_nan():
     assert widget.distances is not None, "Distances should be calculated"
     assert len(widget.distances) == 2, f"Expected 2 valid distances, got {len(widget.distances)}"
     
-    print(f"  ✓ NaN values filtered correctly")
+    print("  ✓ NaN values filtered correctly")
     print(f"  ✓ Calculated {len(widget.distances)} valid distances")
     
     return True
