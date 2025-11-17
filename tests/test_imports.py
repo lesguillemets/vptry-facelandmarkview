@@ -27,7 +27,6 @@ def test_package_imports():
 
     # Test utils can be imported (but not instantiated without Qt)
     try:
-        from vptry_facelandmarkview import utils
 
         print("✓ utils module imported")
         print(

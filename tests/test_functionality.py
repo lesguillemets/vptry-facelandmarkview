@@ -5,7 +5,6 @@ Comprehensive functionality test for Face Landmark Viewer
 
 import sys
 import numpy as np
-from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 from vptry_facelandmarkview import FaceLandmarkViewer

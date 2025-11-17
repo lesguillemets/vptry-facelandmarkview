@@ -5,7 +5,6 @@ Test script to validate the application loads and functions correctly
 
 import sys
 import numpy as np
-from pathlib import Path
 
 
 # Test data loading

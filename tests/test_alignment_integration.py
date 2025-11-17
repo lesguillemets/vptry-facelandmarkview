@@ -4,7 +4,7 @@ Test alignment integration without Qt dependencies
 """
 
 import numpy as np
-from vptry_facelandmarkview.utils import align_landmarks_to_base, draw_landmarks
+from vptry_facelandmarkview.utils import align_landmarks_to_base
 from functools import partial
 
 
