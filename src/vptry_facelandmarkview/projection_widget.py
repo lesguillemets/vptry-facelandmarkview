@@ -113,6 +113,27 @@ class ProjectionWidget(QOpenGLWidget):
         self.scale = scale
         self.update()
 
+    def _project_to_2d(
+        self, scaled_point: npt.NDArray[np.float64]
+    ) -> tuple[float, float]:
+        """Project a scaled 3D point to 2D based on projection type
+        
+        Args:
+            scaled_point: 3D point already scaled and centered
+            
+        Returns:
+            Tuple of (x, y) coordinates in 2D projection space
+        """
+        if self.projection_type == ProjectionType.XZ:
+            # X-Z projection (top view) - x horizontal, z vertical (negated) with additional z-scale
+            return scaled_point[0], -scaled_point[2] * PROJECTION_Z_SCALE
+        elif self.projection_type == ProjectionType.YZ:
+            # Y-Z projection (side view) - z horizontal with additional z-scale, y vertical (negated, top is -y)
+            return scaled_point[2] * PROJECTION_Z_SCALE, -scaled_point[1]
+        else:  # xy
+            # X-Y projection (not used currently)
+            return scaled_point[0], -scaled_point[1]
+
     def initializeGL(self) -> None:
         """Initialize OpenGL"""
         logger.info(
@@ -241,18 +262,8 @@ class ProjectionWidget(QOpenGLWidget):
         for point in landmarks:
             # Project to 2D based on projection type
             scaled_point = (point - self.center) * self.scale
-
-            if self.projection_type == ProjectionType.XZ:
-                # X-Z projection (top view) - x horizontal, z vertical (negated) with additional z-scale
-                x, z = scaled_point[0], -scaled_point[2] * PROJECTION_Z_SCALE
-            elif self.projection_type == ProjectionType.YZ:
-                # Y-Z projection (side view) - z horizontal with additional z-scale, y vertical (negated, top is -y)
-                x, z = scaled_point[2] * PROJECTION_Z_SCALE, -scaled_point[1]
-            else:  # xy
-                # X-Y projection (not used currently)
-                x, z = scaled_point[0], -scaled_point[1]
-
-            gl.glVertex2f(x, z)
+            x, y = self._project_to_2d(scaled_point)
+            gl.glVertex2f(x, y)
 
         gl.glEnd()
 
@@ -273,19 +284,10 @@ class ProjectionWidget(QOpenGLWidget):
             scaled_base = (base_pt - self.center) * self.scale
             scaled_curr = (curr_pt - self.center) * self.scale
 
-            if self.projection_type == ProjectionType.XZ:
-                # X-Z projection - x horizontal, z vertical (negated) with additional z-scale
-                base_x, base_z = scaled_base[0], -scaled_base[2] * PROJECTION_Z_SCALE
-                curr_x, curr_z = scaled_curr[0], -scaled_curr[2] * PROJECTION_Z_SCALE
-            elif self.projection_type == ProjectionType.YZ:
-                # Y-Z projection - z horizontal with additional z-scale, y vertical (negated, top is -y)
-                base_x, base_z = scaled_base[2] * PROJECTION_Z_SCALE, -scaled_base[1]
-                curr_x, curr_z = scaled_curr[2] * PROJECTION_Z_SCALE, -scaled_curr[1]
-            else:  # xy
-                base_x, base_z = scaled_base[0], -scaled_base[1]
-                curr_x, curr_z = scaled_curr[0], -scaled_curr[1]
+            base_x, base_y = self._project_to_2d(scaled_base)
+            curr_x, curr_y = self._project_to_2d(scaled_curr)
 
-            gl.glVertex2f(base_x, base_z)
-            gl.glVertex2f(curr_x, curr_z)
+            gl.glVertex2f(base_x, base_y)
+            gl.glVertex2f(curr_x, curr_y)
 
         gl.glEnd()
