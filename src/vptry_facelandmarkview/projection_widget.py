@@ -114,10 +114,10 @@ class ProjectionWidget(QOpenGLWidget):
         self, scaled_point: npt.NDArray[np.float64]
     ) -> tuple[float, float]:
         """Project a scaled 3D point to 2D based on projection type
-        
+
         Args:
             scaled_point: 3D point already scaled and centered
-            
+
         Returns:
             Tuple of (x, y) coordinates in 2D projection space
         """
@@ -221,7 +221,9 @@ class ProjectionWidget(QOpenGLWidget):
 
             if self.state.align_faces and len(current_landmarks_both) > 0:
                 vector_alignment_indices = (
-                    DEFAULT_ALIGNMENT_LANDMARKS if self.state.use_static_points else None
+                    DEFAULT_ALIGNMENT_LANDMARKS
+                    if self.state.use_static_points
+                    else None
                 )
                 current_landmarks_both = align_landmarks_to_base(
                     current_landmarks_both,

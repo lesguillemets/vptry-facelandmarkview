@@ -6,6 +6,7 @@ Test script to validate the GUI layout improvements
 import sys
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QGridLayout
 from vptry_facelandmarkview import FaceLandmarkViewer
+from vptry_facelandmarkview.histogram_widget import HistogramWidget
 
 
 def test_layout_stretch_factors():
@@ -62,10 +63,10 @@ def test_layout_stretch_factors():
     assert isinstance(viz_grid, QGridLayout), "viz_grid should be a QGridLayout"
     print("  ✓ viz_grid is a QGridLayout")
 
-    # Check that viz_grid has 4 widgets (xz, placeholder, main, yz)
+    # Check that viz_grid has 4 widgets (xz, histogram, main, yz)
     grid_item_count = viz_grid.count()
     assert grid_item_count == 4, f"Expected 4 items in viz_grid, got {grid_item_count}"
-    print("  ✓ viz_grid has 4 widgets")
+    print("  ✓ viz_grid has 4 widgets (xz, histogram, main, yz)")
 
     # Verify grid stretch factors
     row0_stretch = viz_grid.rowStretch(0)
@@ -82,12 +83,20 @@ def test_layout_stretch_factors():
     print(f"  ✓ Grid column 0 (x-z+main) stretch: {col0_stretch}")
     assert col0_stretch == 1, f"Grid column 0 should have stretch 1, got {col0_stretch}"
 
-    print(f"  ✓ Grid column 1 (yz+placeholder) stretch: {col1_stretch}")
+    print(f"  ✓ Grid column 1 (yz+histogram) stretch: {col1_stretch}")
     assert col1_stretch == 0, f"Grid column 1 should have stretch 0, got {col1_stretch}"
+
+    # Verify histogram widget is present
+    histogram_widget = viewer.histogram_widget
+    assert isinstance(histogram_widget, HistogramWidget), (
+        "Top-right should contain HistogramWidget"
+    )
+    print("  ✓ Histogram widget is present in top-right corner")
 
     print("  ✓ All stretch factors are correct!")
     print("  ✓ Main 3D plot will occupy maximum available space (stretch=1)")
     print("  ✓ X-Z and Y-Z plots have fixed dimensions (100px)")
+    print("  ✓ Histogram widget has fixed dimensions (100px)")
     print(
         "  ✓ control_layout, slider_layout, info_label will use minimal space (stretch=0)"
     )

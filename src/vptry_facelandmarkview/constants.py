@@ -30,9 +30,9 @@ PERSPECTIVE_FAR = 100.0
 
 # Projection widget constants
 PROJECTION_SIZE_PX = (
-    100  # Fixed size for projection plots (width for y-z, height for x-z)
+    150  # Fixed size for projection plots (width for y-z, height for x-z)
 )
-PROJECTION_VIEWPORT_FILL = 0.8  # Landmarks should span 80% of the viewport
+PROJECTION_VIEWPORT_FILL = 0.7  # Landmarks should span 70% of the viewport
 PROJECTION_Z_SCALE = (
     1.5  # Additional scaling factor for z-axis to enhance depth visibility
 )
