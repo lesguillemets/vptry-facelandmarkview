@@ -105,6 +105,12 @@ class LandmarkGLWidget(QOpenGLWidget):
         self.state.alignment_method = method
         self.update()
 
+    def set_alignment_landmarks(self, landmarks: list[int]) -> None:
+        """Set custom landmarks to use for alignment calculation"""
+        logger.debug(f"Setting alignment_landmarks to {len(landmarks)} landmarks")
+        self.state.alignment_landmarks = landmarks
+        self.update()
+
     def initializeGL(self) -> None:
         """Initialize OpenGL"""
         logger.info("Initializing OpenGL context")
@@ -199,10 +205,14 @@ class LandmarkGLWidget(QOpenGLWidget):
             # Determine which landmarks to use for alignment
             alignment_indices = None
             if self.state.use_static_points:
-                # Use only nose + forehead landmarks for stable alignment
-                alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
+                # Use custom landmarks if set, otherwise use default
+                alignment_indices = (
+                    self.state.alignment_landmarks
+                    if self.state.alignment_landmarks is not None
+                    else DEFAULT_ALIGNMENT_LANDMARKS
+                )
                 logger.debug(
-                    f"Using {len(DEFAULT_ALIGNMENT_LANDMARKS)} static points for alignment"
+                    f"Using {len(alignment_indices)} static points for alignment"
                 )
 
             # Create a partial function that aligns to base landmarks
@@ -238,11 +248,14 @@ class LandmarkGLWidget(QOpenGLWidget):
                 align_func = get_alignment_method(self.state.alignment_method)
 
                 # Use same alignment indices for vectors
-                vector_alignment_indices = (
-                    DEFAULT_ALIGNMENT_LANDMARKS
-                    if self.state.use_static_points
-                    else None
-                )
+                if self.state.use_static_points:
+                    vector_alignment_indices = (
+                        self.state.alignment_landmarks
+                        if self.state.alignment_landmarks is not None
+                        else DEFAULT_ALIGNMENT_LANDMARKS
+                    )
+                else:
+                    vector_alignment_indices = None
                 current_landmarks_both = align_func(
                     current_landmarks_both,
                     base_landmarks_both,

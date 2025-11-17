@@ -27,11 +27,17 @@ from PySide6.QtCore import Qt
 from vptry_facelandmarkview.gl_widget import LandmarkGLWidget
 from vptry_facelandmarkview.projection_widget import ProjectionWidget
 from vptry_facelandmarkview.histogram_widget import HistogramWidget
-from vptry_facelandmarkview.constants import ProjectionType, PROJECTION_SIZE_PX
+from vptry_facelandmarkview.landmark_selector_dialog import LandmarkSelectorDialog
+from vptry_facelandmarkview.constants import (
+    ProjectionType,
+    PROJECTION_SIZE_PX,
+    DEFAULT_ALIGNMENT_LANDMARKS,
+)
 
 # UI text constants
 WINDOW_TITLE = "Face Landmark Viewer (OpenGL)"
 LOAD_BUTTON_TEXT = "Load .npy File"
+CHOOSE_LANDMARKS_BUTTON_TEXT = "Choose Landmarks"
 BASE_FRAME_LABEL = "Base Frame:"
 FRAME_LABEL = "Frame:"
 ALIGNMENT_METHOD_LABEL = "Alignment Method:"
@@ -57,6 +63,7 @@ class VisualizationWidget(Protocol):
     def set_align_faces(self, align: bool) -> None: ...
     def set_use_static_points(self, use_static: bool) -> None: ...
     def set_alignment_method(self, method: str) -> None: ...
+    def set_alignment_landmarks(self, landmarks: list[int]) -> None: ...
 
 
 class FaceLandmarkViewer(QMainWindow):
@@ -74,6 +81,9 @@ class FaceLandmarkViewer(QMainWindow):
         self.use_static_points: bool = False
         self.alignment_method: str = "default"
         self.initial_file: Optional[Path] = initial_file
+        
+        # Store selected landmarks for alignment (initialized to default)
+        self.selected_alignment_landmarks: list[int] = list(DEFAULT_ALIGNMENT_LANDMARKS)
 
         self.setWindowTitle(WINDOW_TITLE)
         self.setGeometry(100, 100, 1200, 800)
@@ -98,6 +108,11 @@ class FaceLandmarkViewer(QMainWindow):
         self.load_button = QPushButton(LOAD_BUTTON_TEXT)
         self.load_button.clicked.connect(self.load_file)
         control_layout.addWidget(self.load_button)
+        
+        # Choose landmarks button
+        self.choose_landmarks_button = QPushButton(CHOOSE_LANDMARKS_BUTTON_TEXT)
+        self.choose_landmarks_button.clicked.connect(self.open_landmark_selector)
+        control_layout.addWidget(self.choose_landmarks_button)
 
         # Base frame selector
         control_layout.addWidget(QLabel(BASE_FRAME_LABEL))
@@ -360,6 +375,30 @@ class FaceLandmarkViewer(QMainWindow):
         logger.debug(f"Alignment method changed to: {method}")
         if self.data is not None:
             self._update_all_widgets(lambda w: w.set_alignment_method(method))
+
+    def open_landmark_selector(self) -> None:
+        """Open the landmark selector dialog"""
+        logger.info("Opening landmark selector dialog")
+        dialog = LandmarkSelectorDialog(self)
+        
+        # Initialize the dialog with current selection
+        dialog.selected_landmarks = set(self.selected_alignment_landmarks)
+        dialog._update_checkboxes_from_selection()
+        
+        if dialog.exec():  # User clicked OK
+            # Update the stored selection
+            self.selected_alignment_landmarks = dialog.get_selected_landmarks()
+            logger.info(
+                f"Updated alignment landmarks: {len(self.selected_alignment_landmarks)} landmarks selected"
+            )
+            
+            # Update all widgets with new landmarks
+            if self.data is not None:
+                self._update_all_widgets(
+                    lambda w: w.set_alignment_landmarks(self.selected_alignment_landmarks)
+                )
+        else:
+            logger.info("Landmark selection cancelled")
 
     def _update_projection_center_scale(self) -> None:
         """Update projection widgets with center and scale from base frame"""
