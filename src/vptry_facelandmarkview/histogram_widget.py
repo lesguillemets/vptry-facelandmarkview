@@ -150,6 +150,10 @@ class HistogramWidget(QWidget):
 
         # Calculate the 95th percentile for the histogram range
         percentile_95 = np.percentile(distances, OUTLIER_PERCENTILE)
+        
+        # Round x-max (95th percentile) to nearest 0.5 for easier frame comparison
+        # e.g., if percentile is 0.52, round up to 1.0; if 0.35, round to 0.5
+        percentile_95_rounded = np.ceil(percentile_95 / 0.5) * 0.5
 
         # Count outliers (values above 95th percentile)
         outlier_mask = distances > percentile_95
@@ -159,19 +163,19 @@ class HistogramWidget(QWidget):
         non_outlier_distances = distances[~outlier_mask]
 
         if len(non_outlier_distances) > 0:
-            # Create histogram with bins from 0 to 95th percentile
+            # Create histogram with bins from 0 to rounded 95th percentile
             self.hist_values, self.bin_edges = np.histogram(
-                non_outlier_distances, bins=HISTOGRAM_BINS, range=(0, percentile_95)
+                non_outlier_distances, bins=HISTOGRAM_BINS, range=(0, percentile_95_rounded)
             )
             logger.debug(
                 f"Histogram created: {len(non_outlier_distances)} values, "
                 f"{self.outlier_count} outliers, "
-                f"range: [0, {percentile_95:.4f}]"
+                f"range: [0, {percentile_95_rounded:.4f}] (rounded from {percentile_95:.4f})"
             )
         else:
             # All values are outliers (rare case)
             self.hist_values = np.zeros(HISTOGRAM_BINS, dtype=np.int_)
-            self.bin_edges = np.linspace(0, percentile_95, HISTOGRAM_BINS + 1)
+            self.bin_edges = np.linspace(0, percentile_95_rounded, HISTOGRAM_BINS + 1)
             logger.debug("All distances are outliers")
 
     def paintEvent(self, event) -> None:
@@ -205,13 +209,17 @@ class HistogramWidget(QWidget):
         bar_width = width / (n_bins + 1)  # +1 for outlier bar
 
         # Find max count for scaling (include outliers in scaling calculation)
-        max_count = (
+        max_count_raw = (
             max(self.hist_values.max(), self.outlier_count)
             if len(self.hist_values) > 0
             else 1
         )
-        if max_count == 0:
-            max_count = 1
+        if max_count_raw == 0:
+            max_count_raw = 1
+        
+        # Round y-max to nearest 50 for easier frame comparison
+        # e.g., if max is 13, round up to 50; if 52, round up to 100
+        max_count = int(np.ceil(max_count_raw / 50) * 50)
 
         # Draw histogram bars
         for i, count in enumerate(self.hist_values):
