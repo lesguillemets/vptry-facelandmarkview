@@ -102,6 +102,14 @@ class ProjectionWidget(QOpenGLWidget):
         self.state.use_static_points = use_static
         self.update()
 
+    def set_alignment_method(self, method: str) -> None:
+        """Set the alignment method to use"""
+        logger.debug(
+            f"{self.projection_type} projection: Setting alignment_method to: {method}"
+        )
+        self.state.alignment_method = method
+        self.update()
+
     def set_center_and_scale(
         self, center: npt.NDArray[np.float64], scale: float
     ) -> None:
@@ -195,12 +203,18 @@ class ProjectionWidget(QOpenGLWidget):
         # Create alignment function if enabled
         alignment_fn = None
         if self.state.align_faces and len(current_landmarks_valid) > 0:
+            # Import alignment method
+            from vptry_facelandmarkview.alignments import get_alignment_method
+
+            # Get the selected alignment function
+            align_func = get_alignment_method(self.state.alignment_method)
+
             alignment_indices = None
             if self.state.use_static_points:
                 alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
 
             alignment_fn = partial(
-                align_landmarks_to_base,
+                align_func,
                 base_landmarks=base_landmarks_valid,
                 alignment_indices=alignment_indices,
             )
@@ -220,12 +234,18 @@ class ProjectionWidget(QOpenGLWidget):
             current_landmarks_both = current_landmarks[both_valid_mask]
 
             if self.state.align_faces and len(current_landmarks_both) > 0:
+                # Import alignment method
+                from vptry_facelandmarkview.alignments import get_alignment_method
+
+                # Get the selected alignment function
+                align_func = get_alignment_method(self.state.alignment_method)
+
                 vector_alignment_indices = (
                     DEFAULT_ALIGNMENT_LANDMARKS
                     if self.state.use_static_points
                     else None
                 )
-                current_landmarks_both = align_landmarks_to_base(
+                current_landmarks_both = align_func(
                     current_landmarks_both,
                     base_landmarks_both,
                     alignment_indices=vector_alignment_indices,

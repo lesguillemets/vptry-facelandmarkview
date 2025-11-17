@@ -76,6 +76,7 @@ class DisplayState:
     show_vectors: bool = False
     align_faces: bool = False
     use_static_points: bool = False
+    alignment_method: str = "default"  # Name of alignment method to use
 
 
 # Landmark indices for alignment using stable facial features

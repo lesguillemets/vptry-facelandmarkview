@@ -37,6 +37,7 @@ class HistogramWidget(QWidget):
         self.current_frame: int = 0
         self.align_faces: bool = False
         self.use_static_points: bool = False
+        self.alignment_method: str = "default"
 
         # Cached histogram data
         self.distances: Optional[npt.NDArray[np.float64]] = None
@@ -86,6 +87,13 @@ class HistogramWidget(QWidget):
         self._update_histogram()
         self.update()
 
+    def set_alignment_method(self, method: str) -> None:
+        """Set the alignment method to use"""
+        logger.debug(f"Histogram: Setting alignment_method to: {method}")
+        self.alignment_method = method
+        self._update_histogram()
+        self.update()
+
     def _calculate_distances(self) -> Optional[npt.NDArray[np.float64]]:
         """Calculate Euclidean distances between base and current frame landmarks
 
@@ -115,11 +123,17 @@ class HistogramWidget(QWidget):
 
         # Apply alignment if enabled
         if self.align_faces:
+            # Import alignment method
+            from vptry_facelandmarkview.alignments import get_alignment_method
+
+            # Get the selected alignment function
+            align_func = get_alignment_method(self.alignment_method)
+
             alignment_indices = None
             if self.use_static_points:
                 alignment_indices = DEFAULT_ALIGNMENT_LANDMARKS
 
-            current_landmarks_both = align_landmarks_to_base(
+            current_landmarks_both = align_func(
                 current_landmarks_both,
                 base_landmarks_both,
                 alignment_indices=alignment_indices,

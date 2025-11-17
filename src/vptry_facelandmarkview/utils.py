@@ -55,6 +55,9 @@ def align_landmarks_to_base(
 ) -> npt.NDArray[np.float64]:
     """Align landmarks to base landmarks using Procrustes alignment
 
+    This is a backward compatibility wrapper that delegates to the default
+    alignment method in the alignments module.
+
     This removes the effects of face position and rotation by computing
     the optimal rigid transformation (translation + rotation) to align
     the landmarks to the base landmarks.
@@ -70,73 +73,10 @@ def align_landmarks_to_base(
     Returns:
         Aligned landmarks (n_points, 3)
     """
-    if len(landmarks) == 0 or len(base_landmarks) == 0:
-        return landmarks
+    # Import here to avoid circular dependency
+    from vptry_facelandmarkview.alignments import align_landmarks_default
 
-    if len(landmarks) != len(base_landmarks):
-        logger.warning(
-            f"Landmark count mismatch: {len(landmarks)} vs {len(base_landmarks)}. "
-            "Returning unaligned landmarks."
-        )
-        return landmarks
-
-    # If alignment_indices is provided, use only those landmarks for computing alignment
-    if alignment_indices is not None:
-        # Convert to list if it's a set for indexing
-        indices_list = (
-            list(alignment_indices)
-            if isinstance(alignment_indices, set)
-            else alignment_indices
-        )
-
-        # Validate indices
-        max_idx = len(landmarks)
-        if any(idx < 0 or idx >= max_idx for idx in indices_list):
-            logger.warning(
-                f"Invalid alignment indices provided (range: 0-{max_idx - 1}). "
-                "Using all landmarks for alignment."
-            )
-            landmarks_for_alignment = landmarks
-            base_for_alignment = base_landmarks
-        else:
-            # Use only specified landmarks for alignment calculation
-            landmarks_for_alignment = landmarks[indices_list]
-            base_for_alignment = base_landmarks[indices_list]
-            logger.debug(
-                f"Using {len(indices_list)} landmarks for alignment calculation"
-            )
-    else:
-        # Use all landmarks for alignment
-        landmarks_for_alignment = landmarks
-        base_for_alignment = base_landmarks
-
-    # Center both sets of landmarks (for alignment calculation)
-    landmarks_center = landmarks_for_alignment.mean(axis=0)
-    base_center = base_for_alignment.mean(axis=0)
-
-    landmarks_centered = landmarks_for_alignment - landmarks_center
-    base_centered = base_for_alignment - base_center
-
-    # Compute optimal rotation using SVD (Kabsch algorithm)
-    # H = X^T * Y where X is source (centered landmarks) and Y is target (centered base)
-    H = landmarks_centered.T @ base_centered
-    U, _, Vt = np.linalg.svd(H)
-
-    # Compute rotation matrix
-    # Need to handle reflection case
-    d = np.linalg.det(Vt.T @ U.T)
-    rotation = Vt.T @ np.diag([1, 1, d]) @ U.T
-
-    # Apply rotation and translation to ALL landmarks
-    all_landmarks_centered = landmarks - landmarks_center
-    aligned = (rotation @ all_landmarks_centered.T).T + base_center
-
-    logger.debug(
-        f"Alignment: translation={base_center - landmarks_center}, "
-        f"rotation_det={np.linalg.det(rotation):.3f}"
-    )
-
-    return aligned
+    return align_landmarks_default(landmarks, base_landmarks, alignment_indices)
 
 
 def draw_landmarks(
